@@ -1,0 +1,4 @@
+services:
+  api:
+    build: .
+    command: /usr/local/bin/app
