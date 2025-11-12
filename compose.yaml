@@ -2,3 +2,38 @@ services:
   api:
     build: .
     command: /usr/local/bin/app
+    ports:
+      - 4000:4000
+    networks:
+      - backend
+    depends_on: 
+      - db
+  dev:
+    image: cosmtrek/air
+    working_dir: /usr/src/app
+    command: ["air", "-c", ".air.toml"]
+    environment:
+      AIR_WD: /usr/src/app
+    volumes:
+      - ./:/usr/src/app:Z
+    ports:
+      - "5000:4000"
+    networks:
+      - backend
+    depends_on:
+      - db
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: books
+    ports:
+      - 5432:5432
+    networks:
+      - backend
+    volumes:
+      - books-data:/var/lib/postgresql
+volumes:
+  books-data:
+networks:
+  backend:

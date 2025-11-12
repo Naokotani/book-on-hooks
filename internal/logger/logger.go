@@ -18,7 +18,7 @@ const (
 type Logger struct {
 	level    string
 	infoLog  *log.Logger
-	errorLog *log.Logger
+	ErrorLog *log.Logger
 	warnLog  *log.Logger
 }
 
@@ -26,7 +26,7 @@ func NewLogger(level string) Logger {
 	logger := Logger{
 		level:    level,
 		infoLog:  log.New(os.Stdout, green+"INFO:\t"+reset, log.Ldate|log.Ltime),
-		errorLog: log.New(os.Stderr, red+"ERROR:\t"+reset, log.Ldate|log.Ltime|log.Lshortfile),
+		ErrorLog: log.New(os.Stderr, red+"ERROR:\t"+reset, log.Ldate|log.Ltime|log.Lshortfile),
 		warnLog:  log.New(os.Stdout, yellow+"WARN:\t"+reset, log.Ldate|log.Ltime),
 	}
 	if logger.level == "" {
@@ -67,8 +67,8 @@ func (l *Logger) Warn(msg string, args ...any) {
 
 func (l *Logger) Error(msg string, args ...any) {
 	if len(args) == 0 {
-		l.errorLog.Print(msg)
+		l.ErrorLog.Print(msg)
 	} else {
-		l.errorLog.Print(msg)
+		l.ErrorLog.Print(msg)
 	}
 }
