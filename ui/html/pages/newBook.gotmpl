@@ -1,0 +1,42 @@
+{{define "title"}}Create a New Book{{end}}
+{{define "main"}}
+<form action='/inventory/book/create' method='POST' enctype="multipart/form-data">
+
+  <div>
+    <label>Title:</label>
+    {{with .Form.FieldErrors.title}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type='text' name='title' value="{{.Form.Title}}">
+  </div>
+
+  <div>
+    <label>Author:</label>
+    {{with .Form.FieldErrors.author}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type="text" name="author" value="{{.Form.Author}}">
+  </div>
+
+  <div>
+    <label>Price:</label>
+    {{with .Form.FieldErrors.price}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type="text" name="price" value="{{.Form.Price}}">
+  </div>
+
+  <div>
+    <label>Cover:</label>
+    {{with .Form.FieldErrors.Cover}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type="file" name="cover" id="cover" />
+  </div>
+
+  <div>
+    <input type='submit' value='Publish book'>
+  </div>
+
+</form>
+{{end}}

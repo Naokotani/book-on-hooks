@@ -5,16 +5,15 @@ import (
 	"path/filepath"
 	"time"
 
-	"booksonhooks.ca/internal/models"
+	"booksonhooks.ca/internal/repository"
 )
 
 type templateData struct {
 	CurrentYear int
-	Snippet     *models.Snippet
-	Snippets    []*models.Snippet
 	Row         int
 	Col         int
 	Form        any
+	Book        *repository.Book
 }
 
 func humanDate(t time.Time) string {

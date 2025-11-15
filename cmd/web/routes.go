@@ -20,6 +20,7 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/covers/:row/:col", app.covers)
 	router.HandlerFunc(http.MethodGet, "/book/:row/:col", app.book)
 	router.HandlerFunc(http.MethodPost, "/inventory/book/create", app.createBook)
+	router.HandlerFunc(http.MethodGet, "/inventory/book/create", app.bookCreateView)
 	router.HandlerFunc(http.MethodGet, "/invenrtory/book/:id", app.getBook)
 	router.HandlerFunc(http.MethodDelete, "/inventory/boo/:id/", app.deleteBook)
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)

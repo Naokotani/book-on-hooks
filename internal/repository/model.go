@@ -9,7 +9,9 @@ type Book struct {
 
 	ID     int64  `bun:",pk,autoincrement"`
 	Title  string `bun:",notnull"`
-	Cover  string `bun:",notnull"`
+	Cover  string `bun:","`
 	Author string `bun:",notnull"`
 	Price  string `bun:",notnull"`
+	Row    int    `bun:","`
+	Col    int    `bun:","`
 }

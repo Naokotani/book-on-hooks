@@ -16,6 +16,7 @@ services:
       AIR_WD: /usr/src/app
     volumes:
       - ./:/usr/src/app:Z
+      - ./images/:/usr/src/app/images/
     ports:
       - "5000:4000"
     networks:
@@ -35,5 +36,6 @@ services:
       - books-data:/var/lib/postgresql
 volumes:
   books-data:
+  books-images:
 networks:
   backend:

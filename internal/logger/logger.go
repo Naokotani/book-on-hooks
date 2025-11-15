@@ -69,6 +69,6 @@ func (l *Logger) Error(msg string, args ...any) {
 	if len(args) == 0 {
 		l.ErrorLog.Print(msg)
 	} else {
-		l.ErrorLog.Print(msg)
+		l.ErrorLog.Printf(msg, args...)
 	}
 }

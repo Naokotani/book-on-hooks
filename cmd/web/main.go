@@ -5,6 +5,7 @@ import (
 
 	"booksonhooks.ca/internal/logger"
 	"booksonhooks.ca/internal/repository"
+	"github.com/go-playground/form/v4"
 	"html/template"
 	"net/http"
 )
@@ -13,6 +14,7 @@ type application struct {
 	log           *logger.Logger
 	templateCache map[string]*template.Template
 	db            repository.Database
+	formDecoder   *form.Decoder
 }
 
 func main() {
@@ -26,10 +28,13 @@ func main() {
 
 	db, err := repository.GetDatabaseConnection()
 
+	formDecoder := form.NewDecoder()
+
 	app := application{
 		log:           &logger,
 		templateCache: templateCache,
 		db:            db,
+		formDecoder:   formDecoder,
 	}
 
 	err = app.db.CreateTables()
@@ -37,9 +42,6 @@ func main() {
 	if err != nil {
 		app.log.ErrorLog.Fatalf("Failed to create database tables.\n%s\n", err)
 	}
-
-	book := &repository.Book{Title: "Alice in wonderland", Price: "12.99", Cover: "foo", Author: "lewis carol"}
-	err = app.db.InsertBook(book)
 
 	const port = ":4000"
 	app.log.Info("Starting application on port %s\n", port)
