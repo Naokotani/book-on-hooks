@@ -34,11 +34,16 @@ func (db *Database) InsertBook(book *Book, file multipart.File, header *multipar
 		return 0, err
 	}
 
-	tx.NewUpdate().
+	_, err = tx.NewUpdate().
 		Model(&Book{}).
 		Set("cover = ?", filename).
 		Where("id = ?", book.ID).
 		Exec(db.Ctx)
+
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
 
 	tx.Commit()
 	return book.ID, nil

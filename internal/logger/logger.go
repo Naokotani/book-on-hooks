@@ -50,7 +50,7 @@ func (l *Logger) Info(msg string, args ...any) {
 		if len(args) == 0 {
 			l.infoLog.Println(msg)
 		} else {
-			l.infoLog.Printf(msg, args...)
+			l.infoLog.Printf(msg+"\n", args...)
 		}
 	}
 }
@@ -60,7 +60,7 @@ func (l *Logger) Warn(msg string, args ...any) {
 		if len(args) == 0 {
 			l.warnLog.Println(msg)
 		} else {
-			l.warnLog.Printf(msg, args...)
+			l.warnLog.Printf(msg+"\n", args...)
 		}
 	}
 }
@@ -69,6 +69,6 @@ func (l *Logger) Error(msg string, args ...any) {
 	if len(args) == 0 {
 		l.ErrorLog.Print(msg)
 	} else {
-		l.ErrorLog.Printf(msg, args...)
+		l.ErrorLog.Printf(msg+"\n", args...)
 	}
 }

@@ -1,6 +1,6 @@
 package repository
 
-func (db *Database) GetBookByID(id int) (*Book, error) {
+func (db *Database) GetBookByID(id int64) (*Book, error) {
 	book := new(Book)
 	err := db.Conn.NewSelect().Model(book).Where("id = ?", id).Scan(db.Ctx)
 

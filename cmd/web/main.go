@@ -20,6 +20,8 @@ type application struct {
 func main() {
 	logger := logger.NewLogger("info")
 
+	logger.Info("Foo")
+
 	templateCache, err := newTemplateCache()
 
 	if err != nil {
@@ -40,11 +42,11 @@ func main() {
 	err = app.db.CreateTables()
 
 	if err != nil {
-		app.log.ErrorLog.Fatalf("Failed to create database tables.\n%s\n", err)
+		app.log.ErrorLog.Fatalf("Failed to create database tables: %v", err)
 	}
 
 	const port = ":4000"
-	app.log.Info("Starting application on port %s\n", port)
+	app.log.Info("Starting application on port %s", port)
 
 	addr := flag.String("addr", port, "HTTP network address")
 	flag.Parse()

@@ -1,12 +1,24 @@
 package repository
 
-import "errors"
+import "fmt"
 
 func (conn *Database) CreateTables() error {
 	_, err := conn.Conn.NewCreateTable().Model((*Book)(nil)).IfNotExists().Exec(conn.Ctx)
 
 	if err != nil {
-		return errors.New("Failed to create table.\n%s\n.")
+		return fmt.Errorf("Failed to create table: %w", err)
+	}
+
+	_, err = conn.Conn.NewCreateTable().Model((*Machine)(nil)).IfNotExists().Exec(conn.Ctx)
+
+	if err != nil {
+		return fmt.Errorf("Failed to create table: %w", err)
+	}
+
+	_, err = conn.Conn.NewCreateTable().Model((*BookMachine)(nil)).IfNotExists().Exec(conn.Ctx)
+
+	if err != nil {
+		return fmt.Errorf("Failed to create table: %w", err)
 	}
 
 	return nil
