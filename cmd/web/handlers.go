@@ -82,7 +82,7 @@ func (app *application) createBook(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.log.Error("Failed to retrieve newly created book: %v", err)
 		app.clientError(w, http.StatusNotFound)
-		return
+		app.clientError(w, http.StatusNotFound)
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("covers/%d/%d/%d", 1, 1, 1), http.StatusSeeOther)
@@ -94,7 +94,27 @@ func (app *application) bookCreateView(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "newBook.gotmpl", data)
 }
 
-func (app *application) deleteBook(w http.ResponseWriter, r *http.Request) {
+func (app *application) machinesView(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
-	app.render(w, http.StatusOK, "book.gotmpl", data)
+	app.render(w, http.StatusOK, "machines.gotmpl", data)
+}
+
+func (app *application) machineCreateView(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	app.render(w, http.StatusOK, "machines.gotmpl", data)
+}
+
+func (app *application) machineCreate(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	app.render(w, http.StatusOK, "machines.gotmpl", data)
+}
+
+func (app *application) machineCreate(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	app.render(w, http.StatusOK, "machines.gotmpl", data)
+}
+
+func (app *application) machineCreate(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	app.render(w, http.StatusOK, "machines.gotmpl", data)
 }

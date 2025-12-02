@@ -13,7 +13,7 @@ type Book struct {
 	Summary      string         `bun:",notnull"`
 	Image        string         `bun:",notnull"`
 	Price        float64        `bun:",notnull"`
-	BookMachines []*BookMachine `bun:"rel:m2m:book_machine,join:Book=Machine"`
+	BookMachines []*BookMachine `bun:"rel:has-many,join:id=book_id"`
 }
 
 type Machine struct {
@@ -24,7 +24,7 @@ type Machine struct {
 	City         string         `bun:",notnull"`
 	Street       string         `bun:",notnull"`
 	PostalCode   string         `bun:",notnull"`
-	BookMachines []*BookMachine `bun:"rel:m2m:book_machine,join:Machine=Book"`
+	BookMachines []*BookMachine `bun:"rel:has-many,join:id=machine_id"`
 }
 
 type BookMachine struct {

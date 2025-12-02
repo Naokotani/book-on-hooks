@@ -7,8 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /usr/local/bin/app ./cmd/web/
-
+RUN go build -o /usr/local/bin/app ./cmd/web
 FROM debian:bookworm-slim
 
 WORKDIR /usr/local/bin/

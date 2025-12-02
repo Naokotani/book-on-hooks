@@ -1,6 +1,7 @@
 services:
   api:
     build: .
+    image: books-api:latest
     command: /usr/local/bin/app
     ports:
       - 4000:4000

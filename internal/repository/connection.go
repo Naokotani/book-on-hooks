@@ -17,7 +17,7 @@ type Database struct {
 	sqldb *sql.DB
 }
 
-func GetDatabaseConnection() (Database, error) {
+func GetDatabaseConnection() (*Database, error) {
 	ctx := context.Background()
 
 	sqldb := createDBConnection()
@@ -32,7 +32,7 @@ func GetDatabaseConnection() (Database, error) {
 		Conn: db,
 	}
 
-	return conn, nil
+	return &conn, nil
 }
 
 func createDBConnection() *sql.DB {

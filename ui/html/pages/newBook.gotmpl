@@ -27,11 +27,20 @@
   </div>
 
   <div>
-    <label>Cover:</label>
-    {{with .Form.FieldErrors.Cover}}
+    <label>Summary:</label>
+    {{with .Form.FieldErrors.summary}}
       <label class="error">{{.}}</label>
     {{end}}
-    <input type="file" name="cover" id="cover" />
+    <textarea type="text" name="Summary" value="{{.Form.Summary}}">
+    </textarea>
+  </div>
+
+  <div>
+    <label>Cover Image:</label>
+    {{with .Form.FieldErrors.image}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type="file" name="image" id="image" />
   </div>
 
   <div>
