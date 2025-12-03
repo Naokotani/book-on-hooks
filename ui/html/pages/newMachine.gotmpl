@@ -1,0 +1,18 @@
+{{define "title"}}Create a New Machine{{end}}
+{{define "main"}}
+<form action='/api/machine/create' method='POST'>
+
+  <div>
+    <label>Location:</label>
+    {{with .Form.FieldErrors.location}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type='text' name='location' value="{{.Form.Location}}">
+  </div>
+
+  <div>
+    <input type='submit' value='Create Machine'>
+  </div>
+
+</form>
+{{end}}

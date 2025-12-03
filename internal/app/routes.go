@@ -23,14 +23,14 @@ func (app *Application) Routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/book/:row/:col", app.bookHandlers.Book)
 
 	// Book routes
-	router.HandlerFunc(http.MethodPost, "/inventory/book/create", app.bookHandlers.CreateBook)
-	router.HandlerFunc(http.MethodGet, "/inventory/book/create", app.bookHandlers.BookCreateView)
-	router.HandlerFunc(http.MethodGet, "/invenrtory/book/:id", app.bookHandlers.GetBook)
+	router.HandlerFunc(http.MethodPost, "/api/book/create", app.bookHandlers.CreateBook)
+	router.HandlerFunc(http.MethodGet, "/api/book/create", app.bookHandlers.BookCreateView)
+	router.HandlerFunc(http.MethodGet, "/api/book/find/:id", app.bookHandlers.GetBook)
 
 	// Machine routes
-	router.HandlerFunc(http.MethodGet, "/inventory/machines", app.machineHandlers.MachinesView)
-	router.HandlerFunc(http.MethodPost, "/inventory/machine/create", app.machineHandlers.MachineCreate)
-	router.HandlerFunc(http.MethodGet, "/inventory/machine/create", app.machineHandlers.MachineCreateView)
+	router.HandlerFunc(http.MethodGet, "/api/machines", app.machineHandlers.MachinesView)
+	router.HandlerFunc(http.MethodPost, "/api/machine/create", app.machineHandlers.MachineCreate)
+	router.HandlerFunc(http.MethodGet, "/api/machine/create", app.machineHandlers.MachineCreateView)
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 

@@ -20,10 +20,7 @@ type Machine struct {
 	bun.BaseModel `bun:"table:machine,alias:m"`
 
 	ID           int64          `bun:",pk,autoincrement"`
-	Provice      string         `bun:",notnull"`
-	City         string         `bun:",notnull"`
-	Street       string         `bun:",notnull"`
-	PostalCode   string         `bun:",notnull"`
+	Location     string         `bun:",notnull"`
 	BookMachines []*BookMachine `bun:"rel:has-many,join:id=machine_id"`
 }
 

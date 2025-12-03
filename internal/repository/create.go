@@ -48,3 +48,12 @@ func (db *Database) InsertBook(book *Book, file multipart.File, header *multipar
 	tx.Commit()
 	return book.ID, nil
 }
+
+func (db *Database) InsertMachine(machine *Machine) error {
+	_, err := db.Conn.NewInsert().Model(machine).Exec(db.Ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
