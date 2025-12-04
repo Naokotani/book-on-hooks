@@ -31,6 +31,17 @@ func New(temp *template.Templates,
 
 func (h *MachineHandler) MachinesView(w http.ResponseWriter, r *http.Request) {
 	data := h.temp.NewTemplateData(r)
+	h.log.Info("Get all Machines")
+
+	machines, err := h.repo.GetMachines()
+
+	//TODO make error handler
+	if err != nil {
+		h.log.Error("Failed to get machines")
+	}
+
+	h.log.Info("Machines: %v", machines)
+
 	h.temp.Render(w, http.StatusOK, "machines.gotmpl", data)
 }
 

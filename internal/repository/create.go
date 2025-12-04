@@ -36,7 +36,7 @@ func (db *Database) InsertBook(book *Book, file multipart.File, header *multipar
 
 	_, err = tx.NewUpdate().
 		Model(&Book{}).
-		Set("cover = ?", filename).
+		Set("image = ?", filename).
 		Where("id = ?", book.ID).
 		Exec(db.Ctx)
 

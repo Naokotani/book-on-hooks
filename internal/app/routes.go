@@ -23,6 +23,7 @@ func (app *Application) Routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/book/:row/:col", app.bookHandlers.Book)
 
 	// Book routes
+	router.HandlerFunc(http.MethodGet, "/api/books", app.bookHandlers.GetBooks)
 	router.HandlerFunc(http.MethodPost, "/api/book/create", app.bookHandlers.CreateBook)
 	router.HandlerFunc(http.MethodGet, "/api/book/create", app.bookHandlers.BookCreateView)
 	router.HandlerFunc(http.MethodGet, "/api/book/find/:id", app.bookHandlers.GetBook)

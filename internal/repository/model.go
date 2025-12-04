@@ -12,7 +12,7 @@ type Book struct {
 	Author       string         `bun:",notnull"`
 	Summary      string         `bun:",notnull"`
 	Image        string         `bun:",notnull"`
-	Price        float64        `bun:",notnull"`
+	Price        string         `bun:",notnull"`
 	BookMachines []*BookMachine `bun:"rel:has-many,join:id=book_id"`
 }
 

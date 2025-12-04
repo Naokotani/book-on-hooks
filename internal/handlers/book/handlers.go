@@ -1,7 +1,6 @@
 package book
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -72,7 +71,18 @@ func (h *BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 
 func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
 	data := h.temp.NewTemplateData(r)
-	h.temp.Render(w, http.StatusOK, "books.gotmpl", data)
+	books, err := h.repo.GetBooks()
+	if err != nil {
+		httpErrors.NotFound(w)
+		h.log.Error("Failed to read books. %s", err)
+		return
+	}
+
+	for _, b := range books {
+		h.log.Info("Book: %v", b)
+	}
+
+	h.temp.Render(w, http.StatusOK, "home.gotmpl", data)
 }
 
 func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
@@ -88,9 +98,9 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, form, httpErr := forms.ParseBookForm(h.form, r)
+	id, form, httpErr := forms.BookFormService(h.form, r)
 
-	if httpErr.Err != nil {
+	if httpErr != nil {
 		data := h.temp.NewTemplateData(r)
 		data.Form = form
 		h.temp.Render(w, httpErr.Status, "newBook.gotmpl", data)
@@ -104,7 +114,7 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 		httpErrors.ClientError(w, http.StatusNotFound)
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("covers/%d/%d/%d", 1, 1, 1), http.StatusSeeOther)
+	http.Redirect(w, r, "/api/books", http.StatusSeeOther)
 }
 
 func (h *BookHandler) BookCreateView(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,6 @@
 {{define "title"}}Create a New Book{{end}}
 {{define "main"}}
-<form action='/inventory/book/create' method='POST' enctype="multipart/form-data">
+<form action='/api/book/create' method='POST' enctype="multipart/form-data">
 
   <div>
     <label>Title:</label>
@@ -31,7 +31,7 @@
     {{with .Form.FieldErrors.summary}}
       <label class="error">{{.}}</label>
     {{end}}
-    <textarea type="text" name="Summary" value="{{.Form.Summary}}">
+    <textarea type="text" name="summary" value="{{.Form.Summary}}">
     </textarea>
   </div>
 
