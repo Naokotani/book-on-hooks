@@ -12,6 +12,8 @@ import (
 
 type MachineCreateForm struct {
 	Location            string `form:"location"`
+	Rows                int    `form:"rows"`
+	Cols                int    `form:"cols"`
 	validator.Validator `form:"-"`
 }
 
@@ -37,7 +39,7 @@ func MachineFormService(f *Form, r *http.Request) (int64, *MachineCreateForm, *h
 		return 0, &form, &httpErrors.HTTPError{Status: http.StatusUnprocessableEntity, Err: fmt.Errorf("failed to validate form. Book: %v", machine)}
 	}
 
-	err = f.repo.InsertMachine(&machine)
+	_, err = f.repo.InsertMachine(r.Context(), &machine)
 
 	if err != nil {
 		return 0, &form, &httpErrors.HTTPError{Status: http.StatusInternalServerError, Err: fmt.Errorf("failed to insert machine: %w", err)}

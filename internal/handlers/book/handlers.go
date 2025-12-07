@@ -48,7 +48,7 @@ func (h *BookHandler) Cover(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book, err := h.repo.GetBookByRowAndCol(row, col)
+	book, err := h.repo.GetBookByRowAndCol(r.Context(), row, col)
 	if err != nil || col < 0 {
 		httpErrors.NotFound(w)
 		return
@@ -71,7 +71,9 @@ func (h *BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 
 func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
 	data := h.temp.NewTemplateData(r)
-	books, err := h.repo.GetBooks()
+	books, err := h.repo.GetBooks(r.Context())
+
+	//TODO make error handler. Need to type check to see if its just empty.
 	if err != nil {
 		httpErrors.NotFound(w)
 		h.log.Error("Failed to read books. %s", err)
@@ -82,7 +84,9 @@ func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
 		h.log.Info("Book: %v", b)
 	}
 
-	h.temp.Render(w, http.StatusOK, "home.gotmpl", data)
+	data.Books = books
+
+	h.temp.Render(w, http.StatusOK, "books.gotmpl", data)
 }
 
 func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +111,7 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.repo.GetBookByID(id)
+	_, err = h.repo.GetBookByID(r.Context(), id)
 
 	if err != nil {
 		h.log.Error("Failed to retrieve newly created book: %v", err)

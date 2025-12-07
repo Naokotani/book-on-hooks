@@ -2,47 +2,41 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
-	"github.com/uptrace/bun/extra/bundebug"
+	"github.com/jackc/pgx/v5"
 )
 
 type Database struct {
-	Conn  *bun.DB
-	Ctx   context.Context
-	sqldb *sql.DB
+	Db *pgx.Conn
 }
 
 func GetDatabaseConnection() (*Database, error) {
 	ctx := context.Background()
 
-	sqldb := createDBConnection()
+	db, err := createDBConnection(ctx)
 
-	db := bun.NewDB(sqldb, pgdialect.New())
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close(ctx)
 
-	db.AddQueryHook(bundebug.NewQueryHook(
-		bundebug.WithVerbose(true),
-	))
-	conn := Database{
-		Ctx:  ctx,
-		Conn: db,
+	database := Database{
+		Db: db,
 	}
 
-	return &conn, nil
+	return &database, nil
 }
 
-func createDBConnection() *sql.DB {
-	dsn := "postgres://postgres:secret@db:5432/postgres?sslmode=disable"
+func createDBConnection(ctx context.Context) (*pgx.Conn, error) {
+	url := "postgres://postgres:secret@db:5432/postgres?sslmode=disable"
+	var err error
 	for range 10 {
-		db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-		if err := db.Ping(); err == nil {
-			return db
+		conn, err := pgx.Connect(ctx, url)
+		if err == nil {
+			return conn, nil
 		}
 		time.Sleep(1 * time.Second)
 	}
-	return nil
+	return nil, err
 }

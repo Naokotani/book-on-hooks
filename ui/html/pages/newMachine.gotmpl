@@ -11,6 +11,22 @@
   </div>
 
   <div>
+    <label>Rows:</label>
+    {{with .Form.FieldErrors.rows}}
+      <label class="error">{{.}}</label>
+      <input type='number' name='rows' value="{{.Form.Rows}}">
+    {{end}}
+  </div>
+
+  <div>
+    <label>Columns:</label>
+    {{with .Form.FieldErrors.cols}}
+      <label class="error">{{.}}</label>
+    {{end}}
+    <input type='number' name='cols' value="{{.Form.Cols}}">
+  </div>
+
+  <div>
     <input type='submit' value='Create Machine'>
   </div>
 

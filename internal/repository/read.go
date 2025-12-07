@@ -1,66 +1,63 @@
 package repository
 
-func (db *Database) GetBookByID(id int64) (*Book, error) {
-	book := new(Book)
-	err := db.Conn.NewSelect().Model(book).Where("id = ?", id).Scan(db.Ctx)
+import (
+	"booksonhooks.ca/internal/sqlc"
+	"context"
+)
 
-	if err != nil {
-		return book, err
-	}
-	return book, nil
-}
+func (db *Database) GetBookByID(ctx context.Context, id int64) (*Book, error) {
+	q := sqlc.New(db.Db)
 
-func (db *Database) GetBookByRowAndCol(row, col int) (*Book, error) {
-	book := new(Book)
-	err := db.Conn.NewSelect().Model(book).
-		Where("row = ?", row).
-		Where("col = ?", col).
-		Scan(db.Ctx)
-
-	if err != nil {
-		return book, err
-	}
-	return book, nil
-}
-
-func (db *Database) GetBooks() ([]Book, error) {
-	booksSelect := make([]map[string]interface{}, 0)
-	err := db.Conn.NewSelect().Model(&Book{}).Limit(100).Scan(db.Ctx, &booksSelect)
+	book, err := q.GetBookByID(ctx, id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var books []Book
-
-	for _, b := range booksSelect {
-		id, _ := b["id"].(int64)
-		title, _ := b["title"].(string)
-		author, _ := b["author"].(string)
-		summary, _ := b["summary"].(string)
-		image, _ := b["image"].(string)
-
-		book := Book{
-			ID:      id,
-			Title:   title,
-			Author:  author,
-			Summary: summary,
-			Image:   image,
-		}
-		books = append(books, book)
-	}
-
-	return books, nil
+	return &Book{
+		book.ID,
+		book.Title,
+		book.Author,
+		book.Summary,
+		book.Image,
+		book.Price,
+	}, nil
 }
 
-func (db *Database) GetMachines() ([]map[string]interface{}, error) {
-	machines := make([]map[string]interface{}, 0)
-	var machine Machine
-	err := db.Conn.NewSelect().Model(&machine).Limit(100).Scan(db.Ctx, &machines)
+func (db *Database) GetBookByRowAndCol(ctx context.Context, row, col int) (*Book, error) {
+	q := sqlc.New(db.Db)
+
+	book, err := q.GetBookByRowAndCol(ctx,
+		sqlc.GetBookByRowAndColParams{
+			Row: int32(row),
+			Col: int32(col),
+		})
+
+	if err != nil {
+		return nil, err
+	}
+	return mapBook(book), nil
+}
+
+func (db *Database) GetBooks(ctx context.Context) ([]Book, error) {
+	q := sqlc.New(db.Db)
+
+	books, err := q.ListBooks(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return machines, nil
+	return mapBooks(books), nil
+}
+
+func (db *Database) GetMachines(ctx context.Context) ([]Machine, error) {
+	q := sqlc.New(db.Db)
+
+	machines, err := q.ListMachines(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapMachines(machines), nil
 }

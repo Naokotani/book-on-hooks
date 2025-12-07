@@ -1,59 +1,82 @@
 package repository
 
 import (
-	"database/sql"
+	"context"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"booksonhooks.ca/internal/sqlc"
 )
 
-func (db *Database) InsertBook(book *Book, file multipart.File, header *multipart.FileHeader) (int64, error) {
+func (db *Database) InsertBook(ctx context.Context,
+	book *Book, file multipart.File,
+	header *multipart.FileHeader) (int64, error) {
 
-	tx, err := db.Conn.BeginTx(db.Ctx, &sql.TxOptions{})
+	tx, err := db.Db.Begin(ctx)
 
-	_, err = tx.NewInsert().Model(book).Exec(db.Ctx)
 	if err != nil {
-		tx.Rollback()
-		return 0, err
+		return 0, fmt.Errorf("Failed to open database transaction:\n%s", err)
+	}
+	defer tx.Rollback(ctx)
+
+	queries := sqlc.New(db.Db)
+
+	qtx := queries.WithTx(tx)
+
+	id, err := qtx.InsertBook(ctx,
+		sqlc.InsertBookParams{
+			Title:   book.Title,
+			Author:  book.Author,
+			Summary: book.Summary,
+			Price:   book.Price,
+		})
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert book\n%s", err)
 	}
 
-	filename := strconv.FormatInt(book.ID, 10) + "_" + header.Filename
+	filename := strconv.FormatInt(id, 10) + "_" + header.Filename
 
 	dst, err := os.Create(filepath.Join("./images/covers", filename))
 	if err != nil {
-		tx.Rollback()
-		return 0, err
+		return 0, fmt.Errorf("failed to create image file\n%s", err)
 	}
 	defer dst.Close()
 
 	_, err = io.Copy(dst, file)
 	if err != nil {
-		tx.Rollback()
-		return 0, err
+		return 0, fmt.Errorf("failed to copy file to image directory\n%s", err)
 	}
 
-	_, err = tx.NewUpdate().
-		Model(&Book{}).
-		Set("image = ?", filename).
-		Where("id = ?", book.ID).
-		Exec(db.Ctx)
+	err = qtx.UpdateBookImage(ctx, sqlc.UpdateBookImageParams{
+		ID:    id,
+		Image: filename,
+	})
 
 	if err != nil {
-		tx.Rollback()
-		return 0, err
+		return 0, fmt.Errorf("failed to update book with image filename\n%s", err)
 	}
 
-	tx.Commit()
-	return book.ID, nil
+	tx.Commit(ctx)
+	return id, nil
 }
 
-func (db *Database) InsertMachine(machine *Machine) error {
-	_, err := db.Conn.NewInsert().Model(machine).Exec(db.Ctx)
+func (db *Database) InsertMachine(ctx context.Context, machine *Machine) (int64, error) {
+
+	q := sqlc.New(db.Db)
+
+	id, err := q.InsertMachine(ctx, sqlc.InsertMachineParams{
+		Location: machine.Location,
+		Rows:     int32(machine.Rows),
+		Columns:  int32(machine.Columns),
+	})
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return id, nil
 }

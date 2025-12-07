@@ -32,6 +32,7 @@ func (app *Application) Routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/api/machines", app.machineHandlers.MachinesView)
 	router.HandlerFunc(http.MethodPost, "/api/machine/create", app.machineHandlers.MachineCreate)
 	router.HandlerFunc(http.MethodGet, "/api/machine/create", app.machineHandlers.MachineCreateView)
+	router.HandlerFunc(http.MethodGet, "/api/machine/load/:id", app.machineHandlers.MachineLoadView)
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 

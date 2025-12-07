@@ -24,6 +24,14 @@ type TemplateData struct {
 	Col         int
 	Form        any
 	Book        *repository.Book
+	Books       []repository.Book
+	Machine     *repository.Machine
+	Machines    []repository.Machine
+	MachineRow  MachineRow
+}
+
+type MachineRow struct {
+	books []repository.Book
 }
 
 func humanDate(t time.Time) string {

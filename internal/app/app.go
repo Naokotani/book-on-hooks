@@ -35,8 +35,6 @@ func CreateApp(addr *string, logger *logger.Logger) http.Server {
 		db:  db,
 	}
 
-	err = app.db.CreateTables()
-
 	form := forms.New(db, logger)
 	template, err := template.New(app.ServerError)
 

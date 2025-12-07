@@ -52,10 +52,10 @@ func BookFormService(f *Form, r *http.Request) (int64, *BookCreateForm, *httpErr
 	}
 	defer file.Close()
 
-	id, err := f.repo.InsertBook(&book, file, header)
+	id, err := f.repo.InsertBook(r.Context(), &book, file, header)
 
 	if err != nil {
-		f.log.Error("Failed to get form image for: %v", form)
+		f.log.ErrorErr(err)
 		form.CheckField(false, "image", "Failed to upload file")
 		return 0, &form, &httpErrors.HTTPError{Status: http.StatusInternalServerError, Err: fmt.Errorf("failed to insert book: %w", err)}
 	}

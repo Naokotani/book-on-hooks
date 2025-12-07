@@ -16,6 +16,10 @@ type MachineHandler struct {
 	repo *repository.Database
 }
 
+type MachineRow struct {
+	books []repository.Book
+}
+
 func New(temp *template.Templates,
 	form *forms.Form,
 	log *logger.Logger,
@@ -31,16 +35,15 @@ func New(temp *template.Templates,
 
 func (h *MachineHandler) MachinesView(w http.ResponseWriter, r *http.Request) {
 	data := h.temp.NewTemplateData(r)
-	h.log.Info("Get all Machines")
 
-	machines, err := h.repo.GetMachines()
+	machines, err := h.repo.GetMachines(r.Context())
 
-	//TODO make error handler
+	//TODO make error handler. Need to type check to see if its just empty.
 	if err != nil {
 		h.log.Error("Failed to get machines")
 	}
 
-	h.log.Info("Machines: %v", machines)
+	data.Machines = machines
 
 	h.temp.Render(w, http.StatusOK, "machines.gotmpl", data)
 }
@@ -62,4 +65,10 @@ func (h *MachineHandler) MachineCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/api/machines", http.StatusSeeOther)
+}
+
+func (h *MachineHandler) MachineLoadView(w http.ResponseWriter, r *http.Request) {
+	data := h.temp.NewTemplateData(r)
+
+	h.temp.Render(w, http.StatusOK, "loadMachine.gotmpl", data)
 }
