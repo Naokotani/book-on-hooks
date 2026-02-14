@@ -13,3 +13,8 @@ SELECT *
 FROM machine
 ORDER BY id
 LIMIT 100;
+
+-- name: GetMachineById :one
+SELECT *
+FROM machine
+WHERE id = $1;

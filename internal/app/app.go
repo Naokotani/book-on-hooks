@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"net/http"
 
 	"booksonhooks.ca/internal/template"
@@ -23,13 +22,7 @@ type Application struct {
 	bookHandlers    *book.BookHandler
 }
 
-func CreateApp(addr *string, logger *logger.Logger) http.Server {
-	db, err := repository.GetDatabaseConnection()
-
-	if err != nil {
-		logger.ErrorLog.Fatal(fmt.Errorf("Failed to get database connection:%s", err))
-	}
-
+func CreateApp(addr *string, logger *logger.Logger, db *repository.Database) http.Server {
 	app := &Application{
 		log: logger,
 		db:  db,
@@ -37,6 +30,10 @@ func CreateApp(addr *string, logger *logger.Logger) http.Server {
 
 	form := forms.New(db, logger)
 	template, err := template.New(app.ServerError)
+
+	if err != nil {
+		logger.ErrorLog.Printf("Failed to create templates\n%s", err)
+	}
 
 	app.homeHandlers = home.New(template, form, logger, db)
 	app.bookHandlers = book.New(template, form, logger, db)

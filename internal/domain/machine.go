@@ -1,13 +1,4 @@
-package repository
-
-type Book struct {
-	ID      int64
-	Title   string
-	Author  string
-	Summary string
-	Image   string
-	Price   string
-}
+package domain
 
 type Machine struct {
 	ID       int64

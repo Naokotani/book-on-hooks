@@ -4,25 +4,32 @@ import (
 	"net/http"
 	"strconv"
 
+	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/forms"
 	"booksonhooks.ca/internal/httpErrors"
 	"booksonhooks.ca/internal/logger"
-	"booksonhooks.ca/internal/repository"
 	"booksonhooks.ca/internal/template"
+	"context"
 	"github.com/julienschmidt/httprouter"
 )
+
+type BookRepo interface {
+	GetBookByRowAndCol(ctx context.Context, row, col int) (*domain.Book, error)
+	GetBooks(ctx context.Context) ([]domain.Book, error)
+	GetBookByID(ctx context.Context, id int64) (*domain.Book, error)
+}
 
 type BookHandler struct {
 	temp *template.Templates
 	form *forms.Form
 	log  *logger.Logger
-	repo *repository.Database
+	repo BookRepo
 }
 
 func New(temp *template.Templates,
 	form *forms.Form,
 	log *logger.Logger,
-	repo *repository.Database) *BookHandler {
+	repo BookRepo) *BookHandler {
 
 	return &BookHandler{
 		temp: temp,
@@ -33,7 +40,6 @@ func New(temp *template.Templates,
 }
 
 func (h *BookHandler) Cover(w http.ResponseWriter, r *http.Request) {
-	data := h.temp.NewTemplateData(r)
 	params := httprouter.ParamsFromContext(r.Context())
 
 	row, err := strconv.Atoi(params.ByName("row"))
@@ -49,19 +55,24 @@ func (h *BookHandler) Cover(w http.ResponseWriter, r *http.Request) {
 	}
 
 	book, err := h.repo.GetBookByRowAndCol(r.Context(), row, col)
-	if err != nil || col < 0 {
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	data.Book = book
-
 	h.log.Info("retrieve cover at row: %d, col: %d", row, col)
 
-	data.Col = 1
-	data.Row = 1
+	response := struct {
+		Row  int `json:"row"`
+		Col  int `json:"col"`
+		Book any `json:"book"`
+	}{
+		Row:  row,
+		Col:  col,
+		Book: book,
+	}
 
-	h.temp.Render(w, http.StatusOK, "covers.gotmpl", data)
+	h.writeJSON(w, http.StatusOK, response)
 }
 
 func (h *BookHandler) Book(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +81,6 @@ func (h *BookHandler) Book(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
-	data := h.temp.NewTemplateData(r)
 	books, err := h.repo.GetBooks(r.Context())
 
 	//TODO make error handler. Need to type check to see if its just empty.
@@ -84,9 +94,7 @@ func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
 		h.log.Info("Book: %v", b)
 	}
 
-	data.Books = books
-
-	h.temp.Render(w, http.StatusOK, "books.gotmpl", data)
+	h.writeJSON(w, http.StatusOK, books)
 }
 
 func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
@@ -119,12 +127,6 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/api/books", http.StatusSeeOther)
-}
-
-func (h *BookHandler) BookCreateView(w http.ResponseWriter, r *http.Request) {
-	data := h.temp.NewTemplateData(r)
-	data.Form = forms.BookCreateForm{}
-	h.temp.Render(w, http.StatusOK, "newBook.gotmpl", data)
 }
 
 func (h *BookHandler) deleteBook(w http.ResponseWriter, r *http.Request) {

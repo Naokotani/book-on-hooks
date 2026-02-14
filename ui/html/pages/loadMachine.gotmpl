@@ -1,0 +1,9 @@
+{{define "title"}}Load Machine: {{.Machine.ID}}{{end}}
+{{define "main"}}
+  {{range .Machine.Rows}}
+  {{range .Machine.Columns}}
+    <p>foo</p>
+  {{end}}
+  {{end}}
+  </ul>
+{{end}}

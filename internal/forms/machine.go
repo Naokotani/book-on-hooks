@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/httpErrors"
-	"booksonhooks.ca/internal/repository"
 	"booksonhooks.ca/internal/validator"
 )
 
@@ -33,7 +33,11 @@ func MachineFormService(f *Form, r *http.Request) (int64, *MachineCreateForm, *h
 	form.CheckField(validator.NotBlank(form.Location), "location", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Location, 100), "location", "This field can have a maximum of 100 characters")
 
-	machine := repository.Machine{Location: form.Location}
+	machine := domain.Machine{
+		Location: form.Location,
+		Rows:     form.Rows,
+		Columns:  form.Cols,
+	}
 
 	if !form.Valid() {
 		return 0, &form, &httpErrors.HTTPError{Status: http.StatusUnprocessableEntity, Err: fmt.Errorf("failed to validate form. Book: %v", machine)}

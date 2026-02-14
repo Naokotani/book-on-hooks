@@ -16,6 +16,10 @@ func ClientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
+func ServerError(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
+}
+
 func NotFound(w http.ResponseWriter) {
 	ClientError(w, http.StatusNotFound)
 }

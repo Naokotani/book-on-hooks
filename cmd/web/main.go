@@ -5,6 +5,8 @@ import (
 
 	"booksonhooks.ca/internal/app"
 	"booksonhooks.ca/internal/logger"
+	"booksonhooks.ca/internal/repository"
+	"context"
 )
 
 func main() {
@@ -16,7 +18,13 @@ func main() {
 	addr := flag.String("addr", port, "HTTP network address")
 	flag.Parse()
 
-	srv := app.CreateApp(addr, &logger)
-	err := srv.ListenAndServe()
+	db, err := repository.GetDatabaseConnection()
+	if err != nil {
+		logger.ErrorLog.Fatalf("failed to create database connection\n%s", err)
+	}
+	defer db.Db.Close(context.Background())
+
+	srv := app.CreateApp(addr, &logger, db)
+	err = srv.ListenAndServe()
 	logger.ErrorLog.Fatal(err)
 }

@@ -9,6 +9,24 @@ import (
 	"context"
 )
 
+const getMachineById = `-- name: GetMachineById :one
+SELECT id, location, rows, columns
+FROM machine
+WHERE id = $1
+`
+
+func (q *Queries) GetMachineById(ctx context.Context, id int64) (Machine, error) {
+	row := q.db.QueryRow(ctx, getMachineById, id)
+	var i Machine
+	err := row.Scan(
+		&i.ID,
+		&i.Location,
+		&i.Rows,
+		&i.Columns,
+	)
+	return i, err
+}
+
 const insertMachine = `-- name: InsertMachine :one
 INSERT INTO machine (
     location,

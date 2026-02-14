@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/httpErrors"
-	"booksonhooks.ca/internal/repository"
 	"booksonhooks.ca/internal/validator"
 )
 
@@ -38,7 +38,7 @@ func BookFormService(f *Form, r *http.Request) (int64, *BookCreateForm, *httpErr
 	form.CheckField(validator.NotBlank(form.Summary), "summary", "This field cannot be blank")
 	form.CheckField(validator.ValidDollarValue(form.Price), "price", "Must be a valid dollar value. IE 10.99 or $10.99")
 
-	book := repository.Book{Title: form.Title, Author: form.Author, Summary: form.Summary, Price: form.Price}
+	book := domain.Book{Title: form.Title, Author: form.Author, Summary: form.Summary, Price: form.Price}
 
 	if !form.Valid() {
 		f.log.Warn("Invalid form submitted: %v", form)

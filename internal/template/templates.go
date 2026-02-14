@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"booksonhooks.ca/internal/repository"
+	"booksonhooks.ca/internal/domain"
 )
 
 type ServerErrorFunc func(w http.ResponseWriter, err error)
@@ -23,15 +23,15 @@ type TemplateData struct {
 	Row         int
 	Col         int
 	Form        any
-	Book        *repository.Book
-	Books       []repository.Book
-	Machine     *repository.Machine
-	Machines    []repository.Machine
+	Book        *domain.Book
+	Books       []domain.Book
+	Machine     *domain.Machine
+	Machines    []domain.Machine
 	MachineRow  MachineRow
 }
 
 type MachineRow struct {
-	books []repository.Book
+	books []domain.Book
 }
 
 func humanDate(t time.Time) string {

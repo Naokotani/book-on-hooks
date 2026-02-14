@@ -4,10 +4,12 @@ import (
 	"context"
 	"time"
 
+	"booksonhooks.ca/internal/sqlc"
 	"github.com/jackc/pgx/v5"
 )
 
 type Database struct {
+	Q  *sqlc.Queries
 	Db *pgx.Conn
 }
 
@@ -19,10 +21,12 @@ func GetDatabaseConnection() (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close(ctx)
+
+	q := sqlc.New(db)
 
 	database := Database{
 		Db: db,
+		Q:  q,
 	}
 
 	return &database, nil

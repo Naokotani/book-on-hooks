@@ -9,11 +9,12 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/sqlc"
 )
 
 func (db *Database) InsertBook(ctx context.Context,
-	book *Book, file multipart.File,
+	book *domain.Book, file multipart.File,
 	header *multipart.FileHeader) (int64, error) {
 
 	tx, err := db.Db.Begin(ctx)
@@ -23,9 +24,7 @@ func (db *Database) InsertBook(ctx context.Context,
 	}
 	defer tx.Rollback(ctx)
 
-	queries := sqlc.New(db.Db)
-
-	qtx := queries.WithTx(tx)
+	qtx := db.Q.WithTx(tx)
 
 	id, err := qtx.InsertBook(ctx,
 		sqlc.InsertBookParams{
@@ -65,11 +64,8 @@ func (db *Database) InsertBook(ctx context.Context,
 	return id, nil
 }
 
-func (db *Database) InsertMachine(ctx context.Context, machine *Machine) (int64, error) {
-
-	q := sqlc.New(db.Db)
-
-	id, err := q.InsertMachine(ctx, sqlc.InsertMachineParams{
+func (db *Database) InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error) {
+	id, err := db.Q.InsertMachine(ctx, sqlc.InsertMachineParams{
 		Location: machine.Location,
 		Rows:     int32(machine.Rows),
 		Columns:  int32(machine.Columns),
