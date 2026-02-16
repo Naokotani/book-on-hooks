@@ -9,6 +9,16 @@ import (
 	"context"
 )
 
+const deleteBook = `-- name: DeleteBook :exec
+DELETE FROM book
+WHERE id = $1
+`
+
+func (q *Queries) DeleteBook(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteBook, id)
+	return err
+}
+
 const getBookByID = `-- name: GetBookByID :one
 SELECT id, title, author, summary, image, price
 FROM book
@@ -95,6 +105,34 @@ func (q *Queries) ListBooks(ctx context.Context) ([]Book, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateBook = `-- name: UpdateBook :exec
+UPDATE book
+SET title = $2,
+    author = $3,
+    summary = $4,
+    price = $5
+WHERE id = $1
+`
+
+type UpdateBookParams struct {
+	ID      int64
+	Title   string
+	Author  string
+	Summary string
+	Price   string
+}
+
+func (q *Queries) UpdateBook(ctx context.Context, arg UpdateBookParams) error {
+	_, err := q.db.Exec(ctx, updateBook,
+		arg.ID,
+		arg.Title,
+		arg.Author,
+		arg.Summary,
+		arg.Price,
+	)
+	return err
 }
 
 const updateBookImage = `-- name: UpdateBookImage :exec

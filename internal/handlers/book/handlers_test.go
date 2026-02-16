@@ -17,6 +17,8 @@ type mockBookRepo struct {
 	getBookByRowAndColFn func(row, col int) (*domain.Book, error)
 	getBooksFn           func() ([]domain.Book, error)
 	getBookByIDFn        func(id int64) (*domain.Book, error)
+	updateBookFn         func(book *domain.Book) error
+	deleteBookFn         func(id int64) error
 }
 
 func (m *mockBookRepo) GetBookByRowAndCol(ctx context.Context, row, col int) (*domain.Book, error) {
@@ -29,6 +31,20 @@ func (m *mockBookRepo) GetBooks(ctx context.Context) ([]domain.Book, error) {
 
 func (m *mockBookRepo) GetBookByID(ctx context.Context, id int64) (*domain.Book, error) {
 	return m.getBookByIDFn(id)
+}
+
+func (m *mockBookRepo) UpdateBook(ctx context.Context, book *domain.Book) error {
+	if m.updateBookFn == nil {
+		return nil
+	}
+	return m.updateBookFn(book)
+}
+
+func (m *mockBookRepo) DeleteBook(ctx context.Context, id int64) error {
+	if m.deleteBookFn == nil {
+		return nil
+	}
+	return m.deleteBookFn(id)
 }
 
 // --- Tests ---

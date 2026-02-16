@@ -23,3 +23,23 @@ LIMIT 1;
 -- name: DeleteBookMachineByMachineID :exec
 DELETE FROM book_machine
 WHERE machine_id = $1;
+
+-- name: GetMachineWithBooks :many
+SELECT
+    m.id AS machine_id,
+    m.location,
+    m.rows AS machine_rows,
+    m.columns AS machine_columns,
+    b.id AS book_id,
+    b.title,
+    b.author,
+    b.summary,
+    b.image,
+    b.price,
+    bm.row,
+    bm.col
+FROM machine m
+LEFT JOIN book_machine bm ON bm.machine_id = m.id
+LEFT JOIN book b ON b.id = bm.book_id
+WHERE m.id = $1
+ORDER BY bm.row, bm.col;

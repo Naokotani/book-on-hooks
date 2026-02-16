@@ -1,6 +1,7 @@
 package book
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -17,6 +18,8 @@ type BookRepo interface {
 	GetBookByRowAndCol(ctx context.Context, row, col int) (*domain.Book, error)
 	GetBooks(ctx context.Context) ([]domain.Book, error)
 	GetBookByID(ctx context.Context, id int64) (*domain.Book, error)
+	UpdateBook(ctx context.Context, book *domain.Book) error
+	DeleteBook(ctx context.Context, id int64) error
 }
 
 type BookHandler struct {
@@ -132,4 +135,73 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 func (h *BookHandler) deleteBook(w http.ResponseWriter, r *http.Request) {
 	data := h.temp.NewTemplateData(r)
 	h.temp.Render(w, http.StatusOK, "book.gotmpl", data)
+}
+
+func (h *BookHandler) GetBookByIDJSON(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	book, err := h.repo.GetBookByID(r.Context(), int64(id))
+	if err != nil {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, book)
+}
+
+func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	var payload struct {
+		Title   string `json:"title"`
+		Author  string `json:"author"`
+		Summary string `json:"summary"`
+		Price   string `json:"price"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	book := &domain.Book{
+		ID:      int64(id),
+		Title:   payload.Title,
+		Author:  payload.Author,
+		Summary: payload.Summary,
+		Price:   payload.Price,
+	}
+
+	if err := h.repo.UpdateBook(r.Context(), book); err != nil {
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, book)
+}
+
+func (h *BookHandler) DeleteBook(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	if err := h.repo.DeleteBook(r.Context(), int64(id)); err != nil {
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

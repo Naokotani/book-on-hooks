@@ -4,6 +4,8 @@ import (
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/sqlc"
 	"context"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (db *Database) GetBookByID(ctx context.Context, id int64) (*domain.Book, error) {
@@ -62,4 +64,40 @@ func (db *Database) GetMachineById(ctx context.Context, id int64) (*domain.Machi
 	}
 
 	return mapMachine(machine), nil
+}
+
+func (db *Database) GetMachineWithBooks(ctx context.Context, id int64) (*domain.MachineWithBooks, error) {
+	rows, err := db.Q.GetMachineWithBooks(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, pgx.ErrNoRows
+	}
+
+	out := &domain.MachineWithBooks{
+		Machine: domain.Machine{
+			ID:       rows[0].MachineID,
+			Location: rows[0].Location,
+			Rows:     int(rows[0].MachineRows),
+			Columns:  int(rows[0].MachineColumns),
+		},
+		Books: []domain.Book{},
+	}
+
+	for i := 0; i < len(rows) && len(rows) != 0; i++ {
+		if rows[i].BookID.Valid {
+			book := domain.Book{
+				ID:      rows[i].BookID.Int64,
+				Title:   rows[i].Title.String,
+				Author:  rows[i].Author.String,
+				Summary: rows[i].Summary.String,
+				Image:   rows[i].Image.String,
+				Price:   rows[i].Price.String,
+			}
+			out.Books = append(out.Books, book)
+		}
+	}
+
+	return out, nil
 }

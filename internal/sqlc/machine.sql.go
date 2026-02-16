@@ -9,6 +9,16 @@ import (
 	"context"
 )
 
+const deleteMachine = `-- name: DeleteMachine :exec
+DELETE FROM machine
+WHERE id = $1
+`
+
+func (q *Queries) DeleteMachine(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteMachine, id)
+	return err
+}
+
 const getMachineById = `-- name: GetMachineById :one
 SELECT id, location, rows, columns
 FROM machine
@@ -81,4 +91,29 @@ func (q *Queries) ListMachines(ctx context.Context) ([]Machine, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateMachine = `-- name: UpdateMachine :exec
+UPDATE machine
+SET location = $2,
+    rows = $3,
+    columns = $4
+WHERE id = $1
+`
+
+type UpdateMachineParams struct {
+	ID       int64
+	Location string
+	Rows     int32
+	Columns  int32
+}
+
+func (q *Queries) UpdateMachine(ctx context.Context, arg UpdateMachineParams) error {
+	_, err := q.db.Exec(ctx, updateMachine,
+		arg.ID,
+		arg.Location,
+		arg.Rows,
+		arg.Columns,
+	)
+	return err
 }

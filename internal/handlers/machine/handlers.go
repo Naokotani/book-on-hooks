@@ -20,8 +20,12 @@ import (
 type MachineRepo interface {
 	GetMachines(ctx context.Context) ([]domain.Machine, error)
 	GetMachineById(ctx context.Context, id int64) (*domain.Machine, error)
+	GetMachineWithBooks(ctx context.Context, id int64) (*domain.MachineWithBooks, error)
 	InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error)
 	LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error
+	UpdateMachine(ctx context.Context, machine *domain.Machine) error
+	DeleteMachine(ctx context.Context, id int64) error
+	ClearMachineBooks(ctx context.Context, machineID int64) error
 }
 
 type MachineHandler struct {
@@ -179,6 +183,146 @@ func (h *MachineHandler) MachineLoadView(w http.ResponseWriter, r *http.Request)
 		Location: machine.Location,
 		Rows:     machine.Rows,
 		Cols:     machine.Columns,
+	}
+
+	h.writeJSON(w, http.StatusOK, response)
+}
+
+func (h *MachineHandler) GetMachine(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	machine, err := h.repo.GetMachineById(r.Context(), int64(id))
+	if err != nil {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	response := struct {
+		ID       int64  `json:"id"`
+		Location string `json:"location"`
+		Rows     int    `json:"rows"`
+		Cols     int    `json:"cols"`
+	}{
+		ID:       machine.ID,
+		Location: machine.Location,
+		Rows:     machine.Rows,
+		Cols:     machine.Columns,
+	}
+
+	h.writeJSON(w, http.StatusOK, response)
+}
+
+func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	var payload struct {
+		Location string `json:"location"`
+		Rows     int    `json:"rows"`
+		Cols     int    `json:"cols"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	payload.Location = strings.TrimSpace(payload.Location)
+	if !validator.NotBlank(payload.Location) || !validator.MaxChars(payload.Location, 100) {
+		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+		return
+	}
+
+	machine := &domain.Machine{
+		ID:       int64(id),
+		Location: payload.Location,
+		Rows:     payload.Rows,
+		Columns:  payload.Cols,
+	}
+
+	if err := h.repo.UpdateMachine(r.Context(), machine); err != nil {
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		ID       int64  `json:"id"`
+		Location string `json:"location"`
+		Rows     int    `json:"rows"`
+		Cols     int    `json:"cols"`
+	}{
+		ID:       machine.ID,
+		Location: machine.Location,
+		Rows:     machine.Rows,
+		Cols:     machine.Columns,
+	}
+
+	h.writeJSON(w, http.StatusOK, response)
+}
+
+func (h *MachineHandler) DeleteMachine(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	if err := h.repo.DeleteMachine(r.Context(), int64(id)); err != nil {
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *MachineHandler) ClearMachineBooks(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	if err := h.repo.ClearMachineBooks(r.Context(), int64(id)); err != nil {
+		h.log.Error("failed to clear machine books: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *MachineHandler) GetMachineWithBooks(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	result, err := h.repo.GetMachineWithBooks(r.Context(), int64(id))
+	if err != nil {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	response := struct {
+		Machine domain.Machine `json:"machine"`
+		Books   []domain.Book  `json:"books"`
+	}{
+		Machine: result.Machine,
+		Books:   result.Books,
 	}
 
 	h.writeJSON(w, http.StatusOK, response)

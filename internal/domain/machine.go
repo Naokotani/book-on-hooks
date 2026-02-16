@@ -14,3 +14,8 @@ type BookMachine struct {
 	Row int
 	Col int
 }
+
+type MachineWithBooks struct {
+	Machine Machine
+	Books   []Book
+}

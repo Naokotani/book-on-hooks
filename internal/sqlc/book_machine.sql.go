@@ -7,6 +7,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const deleteBookMachineByMachineID = `-- name: DeleteBookMachineByMachineID :exec
@@ -45,6 +47,75 @@ func (q *Queries) GetBookByRowAndCol(ctx context.Context, arg GetBookByRowAndCol
 		&i.Price,
 	)
 	return i, err
+}
+
+const getMachineWithBooks = `-- name: GetMachineWithBooks :many
+SELECT
+    m.id AS machine_id,
+    m.location,
+    m.rows AS machine_rows,
+    m.columns AS machine_columns,
+    b.id AS book_id,
+    b.title,
+    b.author,
+    b.summary,
+    b.image,
+    b.price,
+    bm.row,
+    bm.col
+FROM machine m
+LEFT JOIN book_machine bm ON bm.machine_id = m.id
+LEFT JOIN book b ON b.id = bm.book_id
+WHERE m.id = $1
+ORDER BY bm.row, bm.col
+`
+
+type GetMachineWithBooksRow struct {
+	MachineID      int64
+	Location       string
+	MachineRows    int32
+	MachineColumns int32
+	BookID         pgtype.Int8
+	Title          pgtype.Text
+	Author         pgtype.Text
+	Summary        pgtype.Text
+	Image          pgtype.Text
+	Price          pgtype.Text
+	Row            pgtype.Int4
+	Col            pgtype.Int4
+}
+
+func (q *Queries) GetMachineWithBooks(ctx context.Context, id int64) ([]GetMachineWithBooksRow, error) {
+	rows, err := q.db.Query(ctx, getMachineWithBooks, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMachineWithBooksRow
+	for rows.Next() {
+		var i GetMachineWithBooksRow
+		if err := rows.Scan(
+			&i.MachineID,
+			&i.Location,
+			&i.MachineRows,
+			&i.MachineColumns,
+			&i.BookID,
+			&i.Title,
+			&i.Author,
+			&i.Summary,
+			&i.Image,
+			&i.Price,
+			&i.Row,
+			&i.Col,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const insertBookMachine = `-- name: InsertBookMachine :exec

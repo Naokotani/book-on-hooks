@@ -13,10 +13,14 @@ import (
 )
 
 type mockMachineRepo struct {
-	getMachinesFn    func() ([]domain.Machine, error)
-	getMachineByIDFn func(id int64) (*domain.Machine, error)
-	insertMachineFn  func(machine *domain.Machine) (int64, error)
-	loadMachineFn    func(machineID int64, books []domain.BookMachine) error
+	getMachinesFn         func() ([]domain.Machine, error)
+	getMachineByIDFn      func(id int64) (*domain.Machine, error)
+	getMachineWithBooksFn func(id int64) (*domain.MachineWithBooks, error)
+	insertMachineFn       func(machine *domain.Machine) (int64, error)
+	loadMachineFn         func(machineID int64, books []domain.BookMachine) error
+	updateMachineFn       func(machine *domain.Machine) error
+	deleteMachineFn       func(id int64) error
+	clearMachineBooksFn   func(machineID int64) error
 }
 
 func (m *mockMachineRepo) GetMachines(ctx context.Context) ([]domain.Machine, error) {
@@ -27,12 +31,40 @@ func (m *mockMachineRepo) GetMachineById(ctx context.Context, id int64) (*domain
 	return m.getMachineByIDFn(id)
 }
 
+func (m *mockMachineRepo) GetMachineWithBooks(ctx context.Context, id int64) (*domain.MachineWithBooks, error) {
+	if m.getMachineWithBooksFn == nil {
+		return &domain.MachineWithBooks{}, nil
+	}
+	return m.getMachineWithBooksFn(id)
+}
+
 func (m *mockMachineRepo) InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error) {
 	return m.insertMachineFn(machine)
 }
 
 func (m *mockMachineRepo) LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error {
 	return m.loadMachineFn(machineID, books)
+}
+
+func (m *mockMachineRepo) UpdateMachine(ctx context.Context, machine *domain.Machine) error {
+	if m.updateMachineFn == nil {
+		return nil
+	}
+	return m.updateMachineFn(machine)
+}
+
+func (m *mockMachineRepo) DeleteMachine(ctx context.Context, id int64) error {
+	if m.deleteMachineFn == nil {
+		return nil
+	}
+	return m.deleteMachineFn(id)
+}
+
+func (m *mockMachineRepo) ClearMachineBooks(ctx context.Context, machineID int64) error {
+	if m.clearMachineBooksFn == nil {
+		return nil
+	}
+	return m.clearMachineBooksFn(machineID)
 }
 
 func TestMachinesViewHandler(t *testing.T) {

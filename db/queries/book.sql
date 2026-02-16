@@ -26,3 +26,14 @@ FROM book
 ORDER BY id
 LIMIT 100;
 
+-- name: UpdateBook :exec
+UPDATE book
+SET title = $2,
+    author = $3,
+    summary = $4,
+    price = $5
+WHERE id = $1;
+
+-- name: DeleteBook :exec
+DELETE FROM book
+WHERE id = $1;

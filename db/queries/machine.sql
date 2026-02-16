@@ -18,3 +18,14 @@ LIMIT 100;
 SELECT *
 FROM machine
 WHERE id = $1;
+
+-- name: UpdateMachine :exec
+UPDATE machine
+SET location = $2,
+    rows = $3,
+    columns = $4
+WHERE id = $1;
+
+-- name: DeleteMachine :exec
+DELETE FROM machine
+WHERE id = $1;
