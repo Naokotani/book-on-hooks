@@ -221,7 +221,7 @@ func TestMachineCRUDAndLoad_Integration(t *testing.T) {
 	book1 := seedBook(t, conn, "Book One")
 	book2 := seedBook(t, conn, "Book Two")
 
-	resp := reqJSON(t, http.MethodPost, ts.URL+"/api/admin/machine/create", map[string]any{
+	resp := reqJSON(t, http.MethodPost, ts.URL+"/api/machines", map[string]any{
 		"location": "HQ",
 		"rows":     4,
 		"cols":     5,
@@ -268,8 +268,7 @@ func TestMachineCRUDAndLoad_Integration(t *testing.T) {
 		t.Fatalf("expected updated location, got %q", updatedMachine.Location)
 	}
 
-	resp = reqJSON(t, http.MethodPost, ts.URL+"/api/admin/machine/load", map[string]any{
-		"machine_id": created.ID,
+	resp = reqJSON(t, http.MethodPut, fmt.Sprintf("%s/api/machines/%d/books", ts.URL, created.ID), map[string]any{
 		"books": []map[string]any{
 			{"book_id": book1, "row": 0, "col": 0},
 			{"book_id": book2, "row": 0, "col": 1},

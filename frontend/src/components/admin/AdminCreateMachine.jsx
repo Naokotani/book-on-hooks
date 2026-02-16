@@ -15,7 +15,7 @@ export default function AdminCreateMachine() {
     setError("");
 
     try {
-      const res = await fetch("/api/admin/machine/create", {
+      const res = await fetch("/api/machines", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,7 +65,7 @@ export default function AdminCreateMachine() {
             id="rows"
             name="rows"
             type="number"
-            min="0"
+            min="1"
             value={rows}
             onChange={(e) => setRows(e.target.value)}
             required
@@ -78,7 +78,7 @@ export default function AdminCreateMachine() {
             id="cols"
             name="cols"
             type="number"
-            min="0"
+            min="1"
             value={cols}
             onChange={(e) => setCols(e.target.value)}
             required

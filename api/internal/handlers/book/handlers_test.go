@@ -3,6 +3,7 @@ package book
 import (
 	"booksonhooks.ca/internal/logger"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,15 +15,10 @@ import (
 // --- Mocks ---
 
 type mockBookRepo struct {
-	getBookByRowAndColFn func(row, col int) (*domain.Book, error)
-	getBooksFn           func() ([]domain.Book, error)
-	getBookByIDFn        func(id int64) (*domain.Book, error)
-	updateBookFn         func(book *domain.Book) error
-	deleteBookFn         func(id int64) error
-}
-
-func (m *mockBookRepo) GetBookByRowAndCol(ctx context.Context, row, col int) (*domain.Book, error) {
-	return m.getBookByRowAndColFn(row, col)
+	getBooksFn    func() ([]domain.Book, error)
+	getBookByIDFn func(id int64) (*domain.Book, error)
+	updateBookFn  func(book *domain.Book) error
+	deleteBookFn  func(id int64) error
 }
 
 func (m *mockBookRepo) GetBooks(ctx context.Context) ([]domain.Book, error) {
@@ -49,56 +45,6 @@ func (m *mockBookRepo) DeleteBook(ctx context.Context, id int64) error {
 
 // --- Tests ---
 
-func TestCoverHandler(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		mockRepo := &mockBookRepo{
-			getBookByRowAndColFn: func(row, col int) (*domain.Book, error) {
-				return &domain.Book{Title: "The Great Gatsby"}, nil
-			},
-		}
-
-		logger := logger.NewLogger("info")
-
-		h := New(nil, &logger, mockRepo)
-
-		req := httptest.NewRequest("GET", "/api/cover/1/1", nil)
-
-		// Inject httprouter params
-		params := httprouter.Params{
-			{Key: "row", Value: "1"},
-			{Key: "col", Value: "1"},
-		}
-		ctx := context.WithValue(req.Context(), httprouter.ParamsKey, params)
-		req = req.WithContext(ctx)
-
-		rr := httptest.NewRecorder()
-		h.Cover(rr, req)
-
-		if rr.Code != http.StatusOK {
-			t.Errorf("expected 200, got %d", rr.Code)
-		}
-	})
-
-	t.Run("Invalid Row Parameter", func(t *testing.T) {
-		h := New(nil, nil, nil) // Repo shouldn't even be called
-
-		req := httptest.NewRequest("GET", "/api/cover/abc/1", nil)
-		params := httprouter.Params{
-			{Key: "row", Value: "abc"},
-			{Key: "col", Value: "1"},
-		}
-		ctx := context.WithValue(req.Context(), httprouter.ParamsKey, params)
-		req = req.WithContext(ctx)
-
-		rr := httptest.NewRecorder()
-		h.Cover(rr, req)
-
-		if rr.Code != http.StatusNotFound {
-			t.Errorf("expected 404, got %d", rr.Code)
-		}
-	})
-}
-
 func TestGetBooksHandler(t *testing.T) {
 	mockRepo := &mockBookRepo{
 		getBooksFn: func() ([]domain.Book, error) {
@@ -116,5 +62,36 @@ func TestGetBooksHandler(t *testing.T) {
 
 	if rr.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", rr.Code)
+	}
+}
+
+func TestGetBookHandler(t *testing.T) {
+	mockRepo := &mockBookRepo{
+		getBooksFn: func() ([]domain.Book, error) { return []domain.Book{}, nil },
+		getBookByIDFn: func(id int64) (*domain.Book, error) {
+			return &domain.Book{ID: id, Title: "Book 1"}, nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(nil, &logger, mockRepo)
+
+	req := httptest.NewRequest("GET", "/api/books/12", nil)
+	params := httprouter.Params{{Key: "id", Value: "12"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.GetBook(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+
+	var resp domain.Book
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if resp.ID != 12 {
+		t.Fatalf("expected id=12, got %d", resp.ID)
 	}
 }

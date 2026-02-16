@@ -23,7 +23,7 @@ export default function AdminCreateBook() {
         throw new Error("please select an image");
       }
 
-      const res = await fetch("/api/admin/book/create", {
+      const res = await fetch("/api/books", {
         method: "POST",
         body: formData,
       });

@@ -43,6 +43,10 @@ func PermittedInt(value int, permittedValues ...int) bool {
 	return slices.Contains(permittedValues, value)
 }
 
+func PositiveInt(value int) bool {
+	return value > 0
+}
+
 func ValidDollarValue(value string) bool {
 	re := regexp.MustCompile(`^\$?\d+(\.\d{2})?$`)
 	if re.MatchString(value) {

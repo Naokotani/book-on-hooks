@@ -106,6 +106,26 @@ func TestPermittedInt(t *testing.T) {
 	}
 }
 
+func TestPositiveInt(t *testing.T) {
+	tests := []struct {
+		name  string
+		in    int
+		valid bool
+	}{
+		{name: "positive", in: 1, valid: true},
+		{name: "zero", in: 0, valid: false},
+		{name: "negative", in: -1, valid: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := PositiveInt(tt.in); got != tt.valid {
+				t.Fatalf("PositiveInt(%d) = %v, want %v", tt.in, got, tt.valid)
+			}
+		})
+	}
+}
+
 func TestValidDollarValue(t *testing.T) {
 	tests := []struct {
 		name  string

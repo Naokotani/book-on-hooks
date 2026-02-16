@@ -10,6 +10,7 @@ import (
 
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/logger"
+	"github.com/julienschmidt/httprouter"
 )
 
 type mockMachineRepo struct {
@@ -102,7 +103,7 @@ func TestMachineCreateHandler(t *testing.T) {
 			return []domain.Machine{}, nil
 		},
 		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
-			return &domain.Machine{ID: id}, nil
+			return &domain.Machine{ID: id, Rows: 6, Columns: 5}, nil
 		},
 		insertMachineFn: func(machine *domain.Machine) (int64, error) {
 			if machine.Location != "HQ" || machine.Rows != 3 || machine.Columns != 4 {
@@ -119,7 +120,7 @@ func TestMachineCreateHandler(t *testing.T) {
 	h := New(&logger, mockRepo)
 
 	body := []byte(`{"location":"HQ","rows":3,"cols":4}`)
-	req := httptest.NewRequest("POST", "/api/admin/machine/create", bytes.NewReader(body))
+	req := httptest.NewRequest("POST", "/api/machines", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 
 	h.MachineCreate(rr, req)
@@ -135,7 +136,7 @@ func TestLoadMachineHandler(t *testing.T) {
 			return []domain.Machine{}, nil
 		},
 		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
-			return &domain.Machine{ID: id}, nil
+			return &domain.Machine{ID: id, Rows: 6, Columns: 5}, nil
 		},
 		insertMachineFn: func(machine *domain.Machine) (int64, error) {
 			return 1, nil
@@ -160,8 +161,10 @@ func TestLoadMachineHandler(t *testing.T) {
 	logger := logger.NewLogger("info")
 	h := New(&logger, mockRepo)
 
-	body := []byte(`{"machine_id":7,"books":[{"book_id":11,"row":1,"col":2},{"book_id":12,"row":3,"col":4}]}`)
-	req := httptest.NewRequest("POST", "/api/admin/machine/load", bytes.NewReader(body))
+	body := []byte(`{"books":[{"book_id":11,"row":1,"col":2},{"book_id":12,"row":3,"col":4}]}`)
+	req := httptest.NewRequest("PUT", "/api/machines/7/books", bytes.NewReader(body))
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()
 
 	h.LoadMachine(rr, req)
@@ -189,7 +192,7 @@ func TestLoadMachineHandler_RejectsDuplicateBookID(t *testing.T) {
 			return []domain.Machine{}, nil
 		},
 		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
-			return &domain.Machine{ID: id}, nil
+			return &domain.Machine{ID: id, Rows: 6, Columns: 5}, nil
 		},
 		insertMachineFn: func(machine *domain.Machine) (int64, error) {
 			return 1, nil
@@ -203,8 +206,66 @@ func TestLoadMachineHandler_RejectsDuplicateBookID(t *testing.T) {
 	logger := logger.NewLogger("info")
 	h := New(&logger, mockRepo)
 
-	body := []byte(`{"machine_id":7,"books":[{"book_id":11,"row":1,"col":1},{"book_id":11,"row":1,"col":2}]}`)
-	req := httptest.NewRequest("POST", "/api/admin/machine/load", bytes.NewReader(body))
+	body := []byte(`{"books":[{"book_id":11,"row":1,"col":1},{"book_id":11,"row":1,"col":2}]}`)
+	req := httptest.NewRequest("PUT", "/api/machines/7/books", bytes.NewReader(body))
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.LoadMachine(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d", rr.Code)
+	}
+}
+
+func TestMachineCreateHandler_RejectsInvalidDimensions(t *testing.T) {
+	mockRepo := &mockMachineRepo{
+		getMachinesFn: func() ([]domain.Machine, error) { return []domain.Machine{}, nil },
+		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
+			return &domain.Machine{ID: id}, nil
+		},
+		insertMachineFn: func(machine *domain.Machine) (int64, error) {
+			t.Fatal("InsertMachine should not be called for invalid payload")
+			return 0, nil
+		},
+		loadMachineFn: func(machineID int64, books []domain.BookMachine) error { return nil },
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	body := []byte(`{"location":"HQ","rows":0,"cols":-1}`)
+	req := httptest.NewRequest("POST", "/api/machines", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	h.MachineCreate(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d", rr.Code)
+	}
+}
+
+func TestLoadMachineHandler_RejectsOutOfBoundsSlot(t *testing.T) {
+	mockRepo := &mockMachineRepo{
+		getMachinesFn: func() ([]domain.Machine, error) { return []domain.Machine{}, nil },
+		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
+			return &domain.Machine{ID: id, Rows: 2, Columns: 2}, nil
+		},
+		insertMachineFn: func(machine *domain.Machine) (int64, error) { return 1, nil },
+		loadMachineFn: func(machineID int64, books []domain.BookMachine) error {
+			t.Fatal("LoadMachine should not be called for out-of-bounds slot")
+			return nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	body := []byte(`{"books":[{"book_id":11,"row":2,"col":0}]}`)
+	req := httptest.NewRequest("PUT", "/api/machines/7/books", bytes.NewReader(body))
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()
 
 	h.LoadMachine(rr, req)

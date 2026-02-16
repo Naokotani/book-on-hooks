@@ -74,6 +74,10 @@ func (h *MachineHandler) MachineCreate(w http.ResponseWriter, r *http.Request) {
 		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
 		return
 	}
+	if !validator.PositiveInt(payload.Rows) || !validator.PositiveInt(payload.Cols) {
+		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+		return
+	}
 
 	machine := &domain.Machine{
 		Location: payload.Location,
@@ -94,9 +98,21 @@ func (h *MachineHandler) MachineCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	machine, err := h.repo.GetMachineById(r.Context(), int64(id))
+	if err != nil {
+		httpErrors.NotFound(w)
+		return
+	}
+
 	var payload struct {
-		MachineID int64 `json:"machine_id"`
-		Books     []struct {
+		Books []struct {
 			BookID int64 `json:"book_id"`
 			Row    int   `json:"row"`
 			Col    int   `json:"col"`
@@ -109,17 +125,16 @@ func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if payload.MachineID <= 0 {
-		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
-		return
-	}
-
 	seenBookIDs := make(map[int64]struct{}, len(payload.Books))
 	seenSlots := make(map[string]struct{}, len(payload.Books))
 
 	books := make([]domain.BookMachine, len(payload.Books))
 	for i, b := range payload.Books {
 		if b.BookID <= 0 || b.Row < 0 || b.Col < 0 {
+			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+			return
+		}
+		if b.Row >= machine.Rows || b.Col >= machine.Columns {
 			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
 			return
 		}
@@ -137,14 +152,14 @@ func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 		seenSlots[slotKey] = struct{}{}
 
 		books[i] = domain.BookMachine{
-			MachineID: payload.MachineID,
+			MachineID: int64(id),
 			BookID:    b.BookID,
 			Row:       b.Row,
 			Col:       b.Col,
 		}
 	}
 
-	if err := h.repo.LoadMachine(r.Context(), payload.MachineID, books); err != nil {
+	if err := h.repo.LoadMachine(r.Context(), int64(id), books); err != nil {
 		h.log.Error("failed to load machine: %v", err)
 		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
@@ -154,7 +169,7 @@ func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 		MachineID int64 `json:"machine_id"`
 		Count     int   `json:"count"`
 	}{
-		MachineID: payload.MachineID,
+		MachineID: int64(id),
 		Count:     len(books),
 	})
 }
@@ -239,6 +254,10 @@ func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 
 	payload.Location = strings.TrimSpace(payload.Location)
 	if !validator.NotBlank(payload.Location) || !validator.MaxChars(payload.Location, 100) {
+		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+		return
+	}
+	if !validator.PositiveInt(payload.Rows) || !validator.PositiveInt(payload.Cols) {
 		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
 		return
 	}

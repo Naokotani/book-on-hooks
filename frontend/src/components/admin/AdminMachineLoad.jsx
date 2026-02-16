@@ -119,13 +119,12 @@ export default function AdminMachineLoad() {
         }
       }
 
-      const res = await fetch("/api/admin/machine/load", {
-        method: "POST",
+      const res = await fetch(`/api/machines/${id}/books`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          machine_id: Number(id),
           books: payloadBooks,
         }),
       });

@@ -14,7 +14,6 @@ import (
 )
 
 type BookRepo interface {
-	GetBookByRowAndCol(ctx context.Context, row, col int) (*domain.Book, error)
 	GetBooks(ctx context.Context) ([]domain.Book, error)
 	GetBookByID(ctx context.Context, id int64) (*domain.Book, error)
 	UpdateBook(ctx context.Context, book *domain.Book) error
@@ -36,66 +35,6 @@ func New(form *forms.Form,
 		log:  log,
 		repo: repo,
 	}
-}
-
-func (h *BookHandler) Cover(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	row, err := strconv.Atoi(params.ByName("row"))
-	if err != nil || row < 0 {
-		httpErrors.NotFound(w)
-		return
-	}
-
-	col, err := strconv.Atoi(params.ByName("col"))
-	if err != nil || col < 0 {
-		httpErrors.NotFound(w)
-		return
-	}
-
-	book, err := h.repo.GetBookByRowAndCol(r.Context(), row, col)
-	if err != nil {
-		httpErrors.NotFound(w)
-		return
-	}
-
-	h.log.Info("retrieve cover at row: %d, col: %d", row, col)
-
-	response := struct {
-		Row  int `json:"row"`
-		Col  int `json:"col"`
-		Book any `json:"book"`
-	}{
-		Row:  row,
-		Col:  col,
-		Book: book,
-	}
-
-	h.writeJSON(w, http.StatusOK, response)
-}
-
-func (h *BookHandler) Book(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	row, err := strconv.Atoi(params.ByName("row"))
-	if err != nil || row < 0 {
-		httpErrors.NotFound(w)
-		return
-	}
-
-	col, err := strconv.Atoi(params.ByName("col"))
-	if err != nil || col < 0 {
-		httpErrors.NotFound(w)
-		return
-	}
-
-	book, err := h.repo.GetBookByRowAndCol(r.Context(), row, col)
-	if err != nil {
-		httpErrors.NotFound(w)
-		return
-	}
-
-	h.writeJSON(w, http.StatusOK, book)
 }
 
 func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
@@ -168,10 +107,6 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusCreated, book)
-}
-
-func (h *BookHandler) GetBookByIDJSON(w http.ResponseWriter, r *http.Request) {
-	h.GetBook(w, r)
 }
 
 func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {

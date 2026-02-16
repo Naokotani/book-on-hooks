@@ -53,6 +53,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Containerfile.nginx
+    depends_on:
+      - api
     networks:
       - backend
     ports:
