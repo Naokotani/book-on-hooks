@@ -1,6 +1,6 @@
 services:
   api:
-    build: .
+    build: ./api
     image: books-api:latest
     command: /usr/local/bin/app
     ports:
@@ -11,13 +11,13 @@ services:
       - db
   dev:
     image: cosmtrek/air
-    working_dir: /usr/src/app
+    working_dir: /usr/src/app/api
     command: ["air", "-c", ".air.toml"]
     environment:
-      AIR_WD: /usr/src/app
+      AIR_WD: /usr/src/app/api
     volumes:
-      - ./:/usr/src/app:Z
-      - ./images/:/usr/src/app/images/
+      - ./api:/usr/src/app/api:Z
+      - ./api/images:/usr/src/app/api/images/
     ports:
       - "5000:4000"
     networks:
@@ -35,8 +35,49 @@ services:
       - backend
     volumes:
       - books-data:/var/lib/postgresql
+  test-db:
+    image: postgres:18
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: books_test
+    ports:
+      - 5433:5432
+    networks:
+      - backend
+    volumes:
+      - books-test-data:/var/lib/postgresql
+  client-nginx:
+    image: client-nginx
+    build:
+      context: ./frontend
+      dockerfile: Containerfile.nginx
+    networks:
+      - backend
+    ports:
+      - 8081:80
+  client-vite:
+    image: client-vite
+    build:
+      context: ./frontend
+      dockerfile: Containerfile.vite
+    volumes:
+      - type: bind
+        source: ./frontend
+        target: /usr/src/app
+      - type: volume
+        source: frontend-node-modules
+        target: /usr/src/app/node_modules
+      - type: bind
+        source: ./frontend/vite.config.js
+        target: /usr/src/app/vite.config.js
+    networks:
+      - backend
+    ports:
+      - 5173:5173
 volumes:
   books-data:
+  books-test-data:
   books-images:
+  frontend-node-modules:
 networks:
   backend:
