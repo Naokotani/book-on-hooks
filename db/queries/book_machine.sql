@@ -20,3 +20,6 @@ WHERE bm.row = $1
   AND bm.col = $2
 LIMIT 1;
 
+-- name: DeleteBookMachineByMachineID :exec
+DELETE FROM book_machine
+WHERE machine_id = $1;

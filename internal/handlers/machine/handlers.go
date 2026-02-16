@@ -21,6 +21,7 @@ type MachineRepo interface {
 	GetMachines(ctx context.Context) ([]domain.Machine, error)
 	GetMachineById(ctx context.Context, id int64) (*domain.Machine, error)
 	InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error)
+	LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error
 }
 
 type MachineHandler struct {
@@ -100,6 +101,57 @@ func (h *MachineHandler) MachineCreate(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusCreated, struct {
 		ID int64 `json:"id"`
 	}{ID: id})
+}
+
+func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		MachineID int64 `json:"machine_id"`
+		Books     []struct {
+			BookID int64 `json:"book_id"`
+			Row    int   `json:"row"`
+			Col    int   `json:"col"`
+		} `json:"books"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		h.log.Error("failed to decode load machine json: %v", err)
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	if payload.MachineID <= 0 {
+		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+		return
+	}
+
+	books := make([]domain.BookMachine, len(payload.Books))
+	for i, b := range payload.Books {
+		if b.BookID <= 0 || b.Row < 0 || b.Col < 0 {
+			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+			return
+		}
+
+		books[i] = domain.BookMachine{
+			MachineID: payload.MachineID,
+			BookID:    b.BookID,
+			Row:       b.Row,
+			Col:       b.Col,
+		}
+	}
+
+	if err := h.repo.LoadMachine(r.Context(), payload.MachineID, books); err != nil {
+		h.log.Error("failed to load machine: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, struct {
+		MachineID int64 `json:"machine_id"`
+		Count     int   `json:"count"`
+	}{
+		MachineID: payload.MachineID,
+		Count:     len(books),
+	})
 }
 
 func (h *MachineHandler) MachineLoadView(w http.ResponseWriter, r *http.Request) {

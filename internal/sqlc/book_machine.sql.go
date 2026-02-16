@@ -9,6 +9,16 @@ import (
 	"context"
 )
 
+const deleteBookMachineByMachineID = `-- name: DeleteBookMachineByMachineID :exec
+DELETE FROM book_machine
+WHERE machine_id = $1
+`
+
+func (q *Queries) DeleteBookMachineByMachineID(ctx context.Context, machineID int64) error {
+	_, err := q.db.Exec(ctx, deleteBookMachineByMachineID, machineID)
+	return err
+}
+
 const getBookByRowAndCol = `-- name: GetBookByRowAndCol :one
 SELECT b.id, b.title, b.author, b.summary, b.image, b.price
 FROM book_machine bm

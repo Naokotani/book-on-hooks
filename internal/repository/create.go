@@ -76,3 +76,35 @@ func (db *Database) InsertMachine(ctx context.Context, machine *domain.Machine) 
 
 	return id, nil
 }
+
+func (db *Database) LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error {
+	tx, err := db.Db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to open database transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := db.Q.WithTx(tx)
+
+	if err := qtx.DeleteBookMachineByMachineID(ctx, machineID); err != nil {
+		return fmt.Errorf("failed to clear existing machine load rows: %w", err)
+	}
+
+	for _, book := range books {
+		err := qtx.InsertBookMachine(ctx, sqlc.InsertBookMachineParams{
+			MachineID: machineID,
+			BookID:    book.BookID,
+			Row:       int32(book.Row),
+			Col:       int32(book.Col),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to insert book_machine row: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
