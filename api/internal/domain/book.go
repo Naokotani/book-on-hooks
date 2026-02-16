@@ -1,10 +1,10 @@
 package domain
 
 type Book struct {
-	ID      int64
-	Title   string
-	Author  string
-	Summary string
-	Image   string
-	Price   string
+	ID      int64  `json:"id"`
+	Title   string `json:"title"`
+	Author  string `json:"author"`
+	Summary string `json:"summary"`
+	Image   string `json:"image"`
+	Price   string `json:"price"`
 }
