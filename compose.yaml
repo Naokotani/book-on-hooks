@@ -62,16 +62,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Containerfile.vite
-    volumes:
-      - type: bind
-        source: ./frontend
-        target: /usr/src/app
-      - type: volume
-        source: frontend-node-modules
-        target: /usr/src/app/node_modules
-      - type: bind
-        source: ./frontend/vite.config.js
-        target: /usr/src/app/vite.config.js
     networks:
       - backend
     ports:
@@ -80,6 +70,5 @@ volumes:
   books-data:
   books-test-data:
   books-images:
-  frontend-node-modules:
 networks:
   backend:

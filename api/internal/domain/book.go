@@ -8,3 +8,9 @@ type Book struct {
 	Image   string `json:"image"`
 	Price   string `json:"price"`
 }
+
+type LoadedBook struct {
+	Book
+	Row int `json:"row"`
+	Col int `json:"col"`
+}

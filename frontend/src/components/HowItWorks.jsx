@@ -1,3 +1,5 @@
+import MarkdownPage from "./MarkdownPage";
+
 export default function HowItWorks() {
-  return <h1>how it works</h1>;
+  return <MarkdownPage slug="how-it-works" title="how it works" />;
 }

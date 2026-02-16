@@ -63,7 +63,7 @@ export default function Location() {
       <ul>
         {machines.map((machine) => (
           <li key={machine.id ?? machine.location}>
-            <Link to={`/admin/machine/load/${machine.id}`}>
+            <Link to={`/location/${machine.id}`}>
               {machine.location} ({machine.rows}x{machine.columns})
             </Link>
           </li>

@@ -3,9 +3,11 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import Home from "./components/Home";
+import About from "./components/About";
 import Books from "./components/Books";
 import HowItWorks from "./components/HowItWorks";
 import Location from "./components/Location";
+import LocationMachineView from "./components/LocationMachineView";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminHome from "./components/admin/AdminHome";
 import AdminBooks from "./components/admin/AdminBooks";
@@ -19,9 +21,11 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/books" element={<Books />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/location" element={<Location />} />
+          <Route path="/location/:id" element={<LocationMachineView />} />
         </Route>
 
         <Route path="/admin" element={<AdminLayout />}>
