@@ -2,12 +2,6 @@
 
 ## Quick Start (Podman)
 
-From the repo root:
-
-```bash
-podman compose up --build
-```
-
 Run in detached mode:
 
 ```bash
