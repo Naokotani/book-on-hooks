@@ -85,18 +85,21 @@ func (db *Database) GetMachineWithBooks(ctx context.Context, id int64) (*domain.
 		Books: []domain.Book{},
 	}
 
-	for i := 0; i < len(rows) && len(rows) != 0; i++ {
-		if rows[i].BookID.Valid {
-			book := domain.Book{
-				ID:      rows[i].BookID.Int64,
-				Title:   rows[i].Title.String,
-				Author:  rows[i].Author.String,
-				Summary: rows[i].Summary.String,
-				Image:   rows[i].Image.String,
-				Price:   rows[i].Price.String,
-			}
-			out.Books = append(out.Books, book)
+	for _, book := range rows {
+
+		if !book.BookID.Valid {
+			continue
 		}
+
+		book := domain.Book{
+			ID:      book.BookID.Int64,
+			Title:   book.Title.String,
+			Author:  book.Author.String,
+			Summary: book.Summary.String,
+			Image:   book.Image.String,
+			Price:   book.Price.String,
+		}
+		out.Books = append(out.Books, book)
 	}
 
 	return out, nil
