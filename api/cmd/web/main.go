@@ -6,7 +6,6 @@ import (
 	"booksonhooks.ca/internal/app"
 	"booksonhooks.ca/internal/logger"
 	"booksonhooks.ca/internal/repository"
-	"context"
 )
 
 func main() {
@@ -22,7 +21,7 @@ func main() {
 	if err != nil {
 		logger.ErrorLog.Fatalf("failed to create database connection\n%s", err)
 	}
-	defer db.Db.Close(context.Background())
+	defer db.Db.Close()
 
 	srv := app.CreateApp(addr, &logger, db)
 	err = srv.ListenAndServe()

@@ -40,6 +40,10 @@ func (db *Database) InsertBook(ctx context.Context,
 
 	filename := strconv.FormatInt(id, 10) + "_" + header.Filename
 
+	if err := os.MkdirAll("./images/covers", 0o755); err != nil {
+		return 0, fmt.Errorf("failed to create images directory\n%s", err)
+	}
+
 	dst, err := os.Create(filepath.Join("./images/covers", filename))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create image file\n%s", err)

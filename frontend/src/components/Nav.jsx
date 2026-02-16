@@ -1,0 +1,12 @@
+import { NavLink } from "react-router-dom";
+
+export default function Nav() {
+  return (
+    <nav>
+      <NavLink to="/">Home</NavLink>{" "}
+      <NavLink to="/books">Books</NavLink>{" "}
+      <NavLink to="/how-it-works">How It Works</NavLink>{" "}
+      <NavLink to="/location">Location</NavLink>
+    </nav>
+  );
+}

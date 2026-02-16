@@ -1,16 +1,36 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-
-function HelloWorldPage() {
-  return <h1>Hello, World!</h1>;
-}
+import Layout from "./components/Layout";
+import Home from "./components/Home";
+import Books from "./components/Books";
+import HowItWorks from "./components/HowItWorks";
+import Location from "./components/Location";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminHome from "./components/admin/AdminHome";
+import AdminBooks from "./components/admin/AdminBooks";
+import AdminCreateBook from "./components/admin/AdminCreateBook";
+import AdminCreateMachine from "./components/admin/AdminCreateMachine";
+import AdminMachineLoad from "./components/admin/AdminMachineLoad";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HelloWorldPage />} />
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/books" element={<Books />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/location" element={<Location />} />
+        </Route>
+
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminHome />} />
+          <Route path="books" element={<AdminBooks />} />
+          <Route path="book/create" element={<AdminCreateBook />} />
+          <Route path="machine/create" element={<AdminCreateMachine />} />
+          <Route path="machine/load/:id" element={<AdminMachineLoad />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

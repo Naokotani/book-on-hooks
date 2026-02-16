@@ -20,7 +20,7 @@ import (
 	"booksonhooks.ca/internal/logger"
 	"booksonhooks.ca/internal/repository"
 	"booksonhooks.ca/internal/sqlc"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func testDBURL() string {
@@ -30,17 +30,22 @@ func testDBURL() string {
 	return "postgres://postgres:secret@localhost:5433/books_test?sslmode=disable"
 }
 
-func connectTestDB(t *testing.T) *pgx.Conn {
+func connectTestDB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 
 	ctx := context.Background()
 	url := testDBURL()
-	var conn *pgx.Conn
+	var conn *pgxpool.Pool
 	var err error
 	for i := 0; i < 30; i++ {
-		conn, err = pgx.Connect(ctx, url)
+		conn, err = pgxpool.New(ctx, url)
 		if err == nil {
-			return conn
+			if pingErr := conn.Ping(ctx); pingErr == nil {
+				return conn
+			} else {
+				err = pingErr
+				conn.Close()
+			}
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -48,7 +53,7 @@ func connectTestDB(t *testing.T) *pgx.Conn {
 	return nil
 }
 
-func ensureSchema(t *testing.T, conn *pgx.Conn) {
+func ensureSchema(t *testing.T, conn *pgxpool.Pool) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -92,14 +97,14 @@ func ensureSchema(t *testing.T, conn *pgx.Conn) {
 	}
 }
 
-func truncateAll(t *testing.T, conn *pgx.Conn) {
+func truncateAll(t *testing.T, conn *pgxpool.Pool) {
 	t.Helper()
 	if _, err := conn.Exec(context.Background(), `TRUNCATE TABLE book_machine, book, machine RESTART IDENTITY CASCADE;`); err != nil {
 		t.Fatalf("failed to truncate tables: %v", err)
 	}
 }
 
-func newTestServer(t *testing.T) (*httptest.Server, *pgx.Conn) {
+func newTestServer(t *testing.T) (*httptest.Server, *pgxpool.Pool) {
 	t.Helper()
 
 	conn := connectTestDB(t)
@@ -113,7 +118,7 @@ func newTestServer(t *testing.T) (*httptest.Server, *pgx.Conn) {
 
 	t.Cleanup(func() {
 		ts.Close()
-		_ = conn.Close(context.Background())
+		conn.Close()
 	})
 
 	return ts, conn
@@ -121,7 +126,7 @@ func newTestServer(t *testing.T) (*httptest.Server, *pgx.Conn) {
 
 func strPtr(v string) *string { return &v }
 
-func seedBook(t *testing.T, conn *pgx.Conn, title string) int64 {
+func seedBook(t *testing.T, conn *pgxpool.Pool, title string) int64 {
 	t.Helper()
 	var id int64
 	err := conn.QueryRow(context.Background(),

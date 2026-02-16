@@ -3,6 +3,8 @@ services:
     build: ./api
     image: books-api:latest
     command: /usr/local/bin/app
+    volumes:
+      - books-images:/usr/local/bin/images
     ports:
       - 4000:4000
     networks:
@@ -17,7 +19,7 @@ services:
       AIR_WD: /usr/src/app/api
     volumes:
       - ./api:/usr/src/app/api:Z
-      - ./api/images:/usr/src/app/api/images/
+      - books-images:/usr/src/app/api/images
     ports:
       - "5000:4000"
     networks:
