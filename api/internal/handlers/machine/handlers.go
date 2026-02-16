@@ -318,8 +318,8 @@ func (h *MachineHandler) GetMachineWithBooks(w http.ResponseWriter, r *http.Requ
 	}
 
 	response := struct {
-		Machine domain.Machine `json:"machine"`
-		Books   []domain.Book  `json:"books"`
+		Machine domain.Machine      `json:"machine"`
+		Books   []domain.LoadedBook `json:"books"`
 	}{
 		Machine: result.Machine,
 		Books:   result.Books,

@@ -1,35 +1,76 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
+function keyFor(row, col) {
+  return `${row}-${col}`;
+}
+
 export default function AdminMachineLoad() {
   const { id } = useParams();
-  const [data, setData] = useState(null);
+  const [machineData, setMachineData] = useState(null);
+  const [books, setBooks] = useState([]);
+  const [slotSelections, setSlotSelections] = useState({});
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadMachine() {
+    async function loadData() {
       try {
         setLoading(true);
         setError("");
+        setMessage("");
 
-        const res = await fetch(`/api/machines/${id}/books`);
-        if (res.status === 404) {
+        const [machineRes, booksRes] = await Promise.all([
+          fetch(`/api/machines/${id}/books`),
+          fetch("/api/books"),
+        ]);
+
+        if (machineRes.status === 404) {
           if (!cancelled) {
-            setData({ machine: null, books: [] });
+            setMachineData({ machine: null, books: [] });
           }
           return;
         }
-        if (!res.ok) {
-          throw new Error(`request failed with status ${res.status}`);
+
+        if (!machineRes.ok) {
+          throw new Error(`machine request failed with status ${machineRes.status}`);
         }
 
-        const json = await res.json();
-        if (!cancelled) {
-          setData(json);
+        const machineJson = await machineRes.json();
+
+        let booksJson = [];
+        if (booksRes.status !== 404) {
+          if (!booksRes.ok) {
+            throw new Error(`books request failed with status ${booksRes.status}`);
+          }
+          booksJson = await booksRes.json();
         }
+
+        if (cancelled) {
+          return;
+        }
+
+        const allBooks = Array.isArray(booksJson) ? booksJson : [];
+        setMachineData(machineJson);
+        setBooks(allBooks);
+
+        const nextSelections = {};
+        const loadedBooks = Array.isArray(machineJson?.books) ? machineJson.books : [];
+        for (const loaded of loadedBooks) {
+          if (typeof loaded?.row !== "number" || typeof loaded?.col !== "number") {
+            continue;
+          }
+          if (typeof loaded?.id !== "number") {
+            continue;
+          }
+          nextSelections[keyFor(loaded.row, loaded.col)] = String(loaded.id);
+        }
+
+        setSlotSelections(nextSelections);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "failed to load machine state");
@@ -41,11 +82,66 @@ export default function AdminMachineLoad() {
       }
     }
 
-    loadMachine();
+    loadData();
     return () => {
       cancelled = true;
     };
   }, [id]);
+
+  function updateSlot(row, col, value) {
+    setSlotSelections((prev) => ({
+      ...prev,
+      [keyFor(row, col)]: value,
+    }));
+  }
+
+  async function saveMachineLoad() {
+    setSaving(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const rowCount = Number(machineData?.machine?.rows) || 0;
+      const colCount = Number(machineData?.machine?.columns) || 0;
+
+      const payloadBooks = [];
+      for (let row = 0; row < rowCount; row++) {
+        for (let col = 0; col < colCount; col++) {
+          const selected = slotSelections[keyFor(row, col)];
+          if (!selected) {
+            continue;
+          }
+          payloadBooks.push({
+            book_id: Number(selected),
+            row,
+            col,
+          });
+        }
+      }
+
+      const res = await fetch("/api/admin/machine/load", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          machine_id: Number(id),
+          books: payloadBooks,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `save failed with status ${res.status}`);
+      }
+
+      setMessage("Machine load saved.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "failed to save machine load");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (loading) {
     return <h1>load machine (loading...)</h1>;
@@ -55,8 +151,9 @@ export default function AdminMachineLoad() {
     return <h1>load machine (error: {error})</h1>;
   }
 
-  const machine = data?.machine;
-  const books = Array.isArray(data?.books) ? data.books : [];
+  const machine = machineData?.machine;
+  const rowCount = Number(machine?.rows) || 0;
+  const colCount = Number(machine?.columns) || 0;
 
   return (
     <section>
@@ -65,20 +162,50 @@ export default function AdminMachineLoad() {
         <p>No machine exists for this id.</p>
       ) : (
         <>
-      <p>
-        {machine?.location} ({machine?.rows}x{machine?.columns})
-      </p>
-      {books.length === 0 ? (
-        <p>No books loaded for this machine.</p>
-      ) : (
-      <ul>
-        {books.map((book) => (
-          <li key={book.id ?? `${book.title}-${book.author}`}>
-            {book.title} by {book.author}
-          </li>
-        ))}
-      </ul>
-      )}
+          <p>
+            {machine.location} ({machine.rows}x{machine.columns})
+          </p>
+
+          {rowCount <= 0 || colCount <= 0 ? (
+            <p>Machine has no grid dimensions.</p>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${colCount}, minmax(180px, 1fr))`,
+                gap: "12px",
+                maxWidth: "1000px",
+              }}
+            >
+              {Array.from({ length: rowCount }).map((_, row) =>
+                Array.from({ length: colCount }).map((__, col) => {
+                  const slotKey = keyFor(row, col);
+                  const selected = slotSelections[slotKey] ?? "";
+                  return (
+                    <label key={slotKey} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      Slot {row},{col}
+                      <select value={selected} onChange={(e) => updateSlot(row, col, e.target.value)}>
+                        <option value="">Empty</option>
+                        {books.map((book) => (
+                          <option key={book.id} value={String(book.id)}>
+                            {book.title}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          <p>
+            <button type="button" onClick={saveMachineLoad} disabled={saving || rowCount <= 0 || colCount <= 0}>
+              {saving ? "Saving..." : "Save Machine Load"}
+            </button>
+          </p>
+
+          {message ? <p>{message}</p> : null}
         </>
       )}
     </section>

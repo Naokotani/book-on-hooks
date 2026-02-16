@@ -15,7 +15,13 @@ type BookMachine struct {
 	Col int `json:"col"`
 }
 
+type LoadedBook struct {
+	Book
+	Row int `json:"row"`
+	Col int `json:"col"`
+}
+
 type MachineWithBooks struct {
-	Machine Machine `json:"machine"`
-	Books   []Book  `json:"books"`
+	Machine Machine      `json:"machine"`
+	Books   []LoadedBook `json:"books"`
 }
