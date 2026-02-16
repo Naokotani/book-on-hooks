@@ -1,6 +1,7 @@
 package book
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -9,8 +10,6 @@ import (
 	"booksonhooks.ca/internal/forms"
 	"booksonhooks.ca/internal/httpErrors"
 	"booksonhooks.ca/internal/logger"
-	"booksonhooks.ca/internal/template"
-	"context"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -23,19 +22,16 @@ type BookRepo interface {
 }
 
 type BookHandler struct {
-	temp *template.Templates
 	form *forms.Form
 	log  *logger.Logger
 	repo BookRepo
 }
 
-func New(temp *template.Templates,
-	form *forms.Form,
+func New(form *forms.Form,
 	log *logger.Logger,
 	repo BookRepo) *BookHandler {
 
 	return &BookHandler{
-		temp: temp,
 		form: form,
 		log:  log,
 		repo: repo,
@@ -79,8 +75,27 @@ func (h *BookHandler) Cover(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) Book(w http.ResponseWriter, r *http.Request) {
-	data := h.temp.NewTemplateData(r)
-	h.temp.Render(w, http.StatusOK, "book.gotmpl", data)
+	params := httprouter.ParamsFromContext(r.Context())
+
+	row, err := strconv.Atoi(params.ByName("row"))
+	if err != nil || row < 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	col, err := strconv.Atoi(params.ByName("col"))
+	if err != nil || col < 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	book, err := h.repo.GetBookByRowAndCol(r.Context(), row, col)
+	if err != nil {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, book)
 }
 
 func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
@@ -101,43 +116,6 @@ func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
-	data := h.temp.NewTemplateData(r)
-	h.temp.Render(w, http.StatusOK, "book.gotmpl", data)
-}
-
-func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
-		h.log.Error("Failed to parse form: %v", err)
-		httpErrors.ClientError(w, http.StatusBadRequest)
-		return
-	}
-
-	id, form, httpErr := forms.BookFormService(h.form, r)
-
-	if httpErr != nil {
-		data := h.temp.NewTemplateData(r)
-		data.Form = form
-		h.temp.Render(w, httpErr.Status, "newBook.gotmpl", data)
-		return
-	}
-
-	_, err = h.repo.GetBookByID(r.Context(), id)
-
-	if err != nil {
-		h.log.Error("Failed to retrieve newly created book: %v", err)
-		httpErrors.ClientError(w, http.StatusNotFound)
-	}
-
-	http.Redirect(w, r, "/api/books", http.StatusSeeOther)
-}
-
-func (h *BookHandler) deleteBook(w http.ResponseWriter, r *http.Request) {
-	data := h.temp.NewTemplateData(r)
-	h.temp.Render(w, http.StatusOK, "book.gotmpl", data)
-}
-
-func (h *BookHandler) GetBookByIDJSON(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 
 	id, err := strconv.Atoi(params.ByName("id"))
@@ -153,6 +131,47 @@ func (h *BookHandler) GetBookByIDJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusOK, book)
+}
+
+func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		h.log.Error("Failed to parse form: %v", err)
+		h.writeJSON(w, http.StatusBadRequest, map[string]any{
+			"error": "failed to parse multipart form",
+		})
+		return
+	}
+
+	id, form, httpErr := forms.BookFormService(h.form, r)
+
+	if httpErr != nil {
+		response := map[string]any{
+			"error": httpErr.Error(),
+		}
+		if form != nil && len(form.FieldErrors) > 0 {
+			response["field_errors"] = form.FieldErrors
+		}
+		h.writeJSON(w, httpErr.Status, response)
+		return
+	}
+
+	book, err := h.repo.GetBookByID(r.Context(), id)
+
+	if err != nil {
+		h.log.Error("Failed to retrieve newly created book: %v", err)
+		h.writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"error": "book was created but could not be retrieved",
+			"id":    id,
+		})
+		return
+	}
+
+	h.writeJSON(w, http.StatusCreated, book)
+}
+
+func (h *BookHandler) GetBookByIDJSON(w http.ResponseWriter, r *http.Request) {
+	h.GetBook(w, r)
 }
 
 func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {

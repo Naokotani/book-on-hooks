@@ -15,11 +15,7 @@ func (app *Application) Routes() http.Handler {
 		httpErrors.NotFound(w)
 	})
 
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
-
-	// Home routes
-	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
-	router.HandlerFunc(http.MethodGet, "/", app.homeHandlers.Home)
+	// Book-by-location routes
 	router.HandlerFunc(http.MethodGet, "/covers/:row/:col", app.bookHandlers.Cover)
 	router.HandlerFunc(http.MethodGet, "/book/:row/:col", app.bookHandlers.Book)
 

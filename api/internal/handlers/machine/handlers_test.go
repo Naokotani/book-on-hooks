@@ -84,7 +84,7 @@ func TestMachinesViewHandler(t *testing.T) {
 	}
 
 	logger := logger.NewLogger("info")
-	h := New(nil, nil, &logger, mockRepo)
+	h := New(&logger, mockRepo)
 
 	req := httptest.NewRequest("GET", "/api/machines", nil)
 	rr := httptest.NewRecorder()
@@ -116,7 +116,7 @@ func TestMachineCreateHandler(t *testing.T) {
 	}
 
 	logger := logger.NewLogger("info")
-	h := New(nil, nil, &logger, mockRepo)
+	h := New(&logger, mockRepo)
 
 	body := []byte(`{"location":"HQ","rows":3,"cols":4}`)
 	req := httptest.NewRequest("POST", "/api/admin/machine/create", bytes.NewReader(body))
@@ -158,7 +158,7 @@ func TestLoadMachineHandler(t *testing.T) {
 	}
 
 	logger := logger.NewLogger("info")
-	h := New(nil, nil, &logger, mockRepo)
+	h := New(&logger, mockRepo)
 
 	body := []byte(`{"machine_id":7,"books":[{"book_id":11,"row":1,"col":2},{"book_id":12,"row":3,"col":4}]}`)
 	req := httptest.NewRequest("POST", "/api/admin/machine/load", bytes.NewReader(body))
@@ -180,5 +180,36 @@ func TestLoadMachineHandler(t *testing.T) {
 
 	if resp.MachineID != 7 || resp.Count != 2 {
 		t.Fatalf("unexpected response payload: %+v", resp)
+	}
+}
+
+func TestLoadMachineHandler_RejectsDuplicateBookID(t *testing.T) {
+	mockRepo := &mockMachineRepo{
+		getMachinesFn: func() ([]domain.Machine, error) {
+			return []domain.Machine{}, nil
+		},
+		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
+			return &domain.Machine{ID: id}, nil
+		},
+		insertMachineFn: func(machine *domain.Machine) (int64, error) {
+			return 1, nil
+		},
+		loadMachineFn: func(machineID int64, books []domain.BookMachine) error {
+			t.Fatal("repo.LoadMachine should not be called for invalid payload")
+			return nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	body := []byte(`{"machine_id":7,"books":[{"book_id":11,"row":1,"col":1},{"book_id":11,"row":1,"col":2}]}`)
+	req := httptest.NewRequest("POST", "/api/admin/machine/load", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	h.LoadMachine(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d", rr.Code)
 	}
 }

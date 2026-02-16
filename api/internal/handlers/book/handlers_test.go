@@ -59,7 +59,7 @@ func TestCoverHandler(t *testing.T) {
 
 		logger := logger.NewLogger("info")
 
-		h := New(nil, nil, &logger, mockRepo)
+		h := New(nil, &logger, mockRepo)
 
 		req := httptest.NewRequest("GET", "/api/cover/1/1", nil)
 
@@ -80,7 +80,7 @@ func TestCoverHandler(t *testing.T) {
 	})
 
 	t.Run("Invalid Row Parameter", func(t *testing.T) {
-		h := New(nil, nil, nil, nil) // Repo shouldn't even be called
+		h := New(nil, nil, nil) // Repo shouldn't even be called
 
 		req := httptest.NewRequest("GET", "/api/cover/abc/1", nil)
 		params := httprouter.Params{
@@ -107,7 +107,7 @@ func TestGetBooksHandler(t *testing.T) {
 	}
 
 	logger := logger.NewLogger("info")
-	h := New(nil, nil, &logger, mockRepo)
+	h := New(nil, &logger, mockRepo)
 
 	req := httptest.NewRequest("GET", "/api/books", nil)
 	rr := httptest.NewRecorder()

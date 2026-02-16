@@ -64,7 +64,9 @@ func (db *Database) InsertBook(ctx context.Context,
 		return 0, fmt.Errorf("failed to update book with image filename\n%s", err)
 	}
 
-	tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return 0, fmt.Errorf("failed to commit transaction\n%s", err)
+	}
 	return id, nil
 }
 

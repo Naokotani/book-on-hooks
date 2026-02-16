@@ -10,10 +10,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"booksonhooks.ca/internal/domain"
-	"booksonhooks.ca/internal/forms"
 	"booksonhooks.ca/internal/httpErrors"
 	"booksonhooks.ca/internal/logger"
-	"booksonhooks.ca/internal/template"
 	"booksonhooks.ca/internal/validator"
 )
 
@@ -29,8 +27,6 @@ type MachineRepo interface {
 }
 
 type MachineHandler struct {
-	temp *template.Templates
-	form *forms.Form
 	log  *logger.Logger
 	repo MachineRepo
 }
@@ -39,14 +35,10 @@ type MachineRow struct {
 	books []domain.Book
 }
 
-func New(temp *template.Templates,
-	form *forms.Form,
-	log *logger.Logger,
+func New(log *logger.Logger,
 	repo MachineRepo) *MachineHandler {
 
 	return &MachineHandler{
-		temp: temp,
-		form: form,
 		log:  log,
 		repo: repo,
 	}
@@ -62,12 +54,6 @@ func (h *MachineHandler) MachinesView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusOK, machines)
-}
-
-func (h *MachineHandler) MachineCreateView(w http.ResponseWriter, r *http.Request) {
-	data := h.temp.NewTemplateData(r)
-	data.Form = forms.MachineCreateForm{}
-	h.temp.Render(w, http.StatusOK, "newMachine.gotmpl", data)
 }
 
 func (h *MachineHandler) MachineCreate(w http.ResponseWriter, r *http.Request) {
@@ -128,12 +114,27 @@ func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	seenBookIDs := make(map[int64]struct{}, len(payload.Books))
+	seenSlots := make(map[string]struct{}, len(payload.Books))
+
 	books := make([]domain.BookMachine, len(payload.Books))
 	for i, b := range payload.Books {
 		if b.BookID <= 0 || b.Row < 0 || b.Col < 0 {
 			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
 			return
 		}
+		if _, exists := seenBookIDs[b.BookID]; exists {
+			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+			return
+		}
+		seenBookIDs[b.BookID] = struct{}{}
+
+		slotKey := strconv.Itoa(b.Row) + ":" + strconv.Itoa(b.Col)
+		if _, exists := seenSlots[slotKey]; exists {
+			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+			return
+		}
+		seenSlots[slotKey] = struct{}{}
 
 		books[i] = domain.BookMachine{
 			MachineID: payload.MachineID,
