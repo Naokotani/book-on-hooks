@@ -20,6 +20,7 @@ func (app *Application) Routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/api/books", app.bookHandlers.CreateBook)
 	router.HandlerFunc(http.MethodGet, "/api/books/:id", app.bookHandlers.GetBook)
 	router.HandlerFunc(http.MethodGet, "/api/books/:id/locations", app.bookHandlers.GetBookLocations)
+	router.HandlerFunc(http.MethodGet, "/api/images/:image", app.bookHandlers.GetImage)
 	router.HandlerFunc(http.MethodPatch, "/api/books/:id", app.bookHandlers.UpdateBook)
 	router.HandlerFunc(http.MethodDelete, "/api/books/:id", app.bookHandlers.DeleteBook)
 

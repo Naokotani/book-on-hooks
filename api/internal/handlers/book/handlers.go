@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/forms"
@@ -12,6 +15,8 @@ import (
 	"booksonhooks.ca/internal/logger"
 	"github.com/julienschmidt/httprouter"
 )
+
+const defaultImageDir = "/data/images"
 
 type BookRepo interface {
 	GetBooks(ctx context.Context) ([]domain.Book, error)
@@ -41,7 +46,6 @@ func New(form *forms.Form,
 func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
 	books, err := h.repo.GetBooks(r.Context())
 
-	//TODO make error handler. Need to type check to see if its just empty.
 	if err != nil {
 		httpErrors.NotFound(w)
 		h.log.Error("Failed to read books. %s", err)
@@ -177,4 +181,40 @@ func (h *BookHandler) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *BookHandler) GetImage(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+	image := params.ByName("image")
+
+	if image == "" || image != filepath.Base(image) || strings.Contains(image, "..") {
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	coversDir := filepath.Join(imageDir(), "covers")
+	target := filepath.Join(coversDir, image)
+	cleanCovers := filepath.Clean(coversDir) + string(os.PathSeparator)
+	cleanTarget := filepath.Clean(target)
+
+	if !strings.HasPrefix(cleanTarget, cleanCovers) {
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	info, err := os.Stat(cleanTarget)
+	if err != nil || !info.Mode().IsRegular() {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	http.ServeFile(w, r, cleanTarget)
+}
+
+func imageDir() string {
+	if dir := os.Getenv("IMAGE_DIR"); dir != "" {
+		return dir
+	}
+	return defaultImageDir
 }

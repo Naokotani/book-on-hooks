@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 function keyFor(row, col) {
   return `${row}-${col}`;
@@ -64,7 +64,7 @@ export default function LocationMachineView() {
 
   if (!machine) {
     return (
-      <section>
+      <section className="location-machine-page">
         <h1>location details</h1>
         <p>No machine exists for this id.</p>
       </section>
@@ -83,11 +83,8 @@ export default function LocationMachineView() {
   }
 
   return (
-    <section>
-      <h1>location details</h1>
-      <p>
-        {machine.location} ({machine.rows}x{machine.columns})
-      </p>
+    <section className="location-machine-page">
+      <h1>{machine.location}</h1>
 
       {rowCount <= 0 || colCount <= 0 ? (
         <p>Machine has no grid dimensions.</p>
@@ -102,17 +99,27 @@ export default function LocationMachineView() {
 
               return (
                 <article key={keyFor(row, col)} className="machine-slot-card">
-                  <h2 className="machine-slot-title">Slot {row},{col}</h2>
                   {!loadedBook ? (
                     <p>Empty</p>
                   ) : (
-                    <>
-                      <p><strong>Title:</strong> {loadedBook.title}</p>
-                      <p><strong>Author:</strong> {loadedBook.author}</p>
-                      <p><strong>Summary:</strong> {loadedBook.summary}</p>
-                      <p><strong>Image:</strong> {loadedBook.image}</p>
-                      <p><strong>Price:</strong> {loadedBook.price}</p>
-                    </>
+                    <Link
+                      className="machine-book-cover-link"
+                      to={`/books/${loadedBook.id}/locations`}
+                    >
+                      <div className="machine-book-cover-wrap">
+                        {loadedBook.image ? (
+                          <img
+                            className="machine-book-cover"
+                            src={`/api/images/${loadedBook.image}`}
+                            alt={`${loadedBook.title} cover`}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <p className="machine-book-cover-missing">No cover</p>
+                        )}
+                      </div>
+                      <h2 className="machine-book-cover-caption h5">{loadedBook.title}</h2>
+                    </Link>
                   )}
                 </article>
               );

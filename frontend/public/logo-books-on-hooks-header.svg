@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 260 150"
+   role="img"
+   aria-labelledby="title desc"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="logo-books-on-hooks-header.svg"
+   width="260"
+   height="150"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview5"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="4.0216667"
+     inkscape:cx="233.23663"
+     inkscape:cy="83.920431"
+     inkscape:window-width="2560"
+     inkscape:window-height="1372"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg5" />
+  <title
+     id="title">Books On Hooks Header Logo</title>
+  <desc
+     id="desc">Scaled-down version of the Books On Hooks stacked logo for header and navigation.</desc>
+  <defs
+     id="defs2">
+    <linearGradient
+       id="inkHeader"
+       x1="0"
+       y1="0"
+       x2="1"
+       y2="0">
+      <stop
+         offset="0%"
+         stop-color="#f3e9d2"
+         id="stop1" />
+      <stop
+         offset="100%"
+         stop-color="#d9c7a1"
+         id="stop2" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#inkHeader"
+       id="linearGradient5"
+       x1="66.779182"
+       y1="1.4974726"
+       x2="165.61238"
+       y2="1.4974726"
+       gradientTransform="scale(0.74873631,1.3355837)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#inkHeader"
+       id="linearGradient6"
+       x1="61.913918"
+       y1="95.293594"
+       x2="173.35896"
+       y2="95.293594"
+       gradientTransform="scale(0.80757285,1.2382784)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#inkHeader"
+       id="linearGradient7"
+       x1="83.997353"
+       y1="1.1905137"
+       x2="235.1926"
+       y2="1.1905137"
+       gradientTransform="scale(0.59525684,1.6799471)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#inkHeader"
+       id="linearGradient8"
+       x1="50.028831"
+       y1="57.637478"
+       x2="127.80732"
+       y2="57.637478"
+       gradientTransform="matrix(2.3152666,0,0,0.43191571,-43.265645,-15.9138)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#inkHeader"
+       id="linearGradient9"
+       x1="78.453049"
+       y1="109.98412"
+       x2="116.48173"
+       y2="109.98412"
+       gradientTransform="matrix(1.4894956,0,0,0.67136823,-43.265645,-15.9138)"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#inkHeader"
+       id="linearGradient10"
+       x1="49.289951"
+       y1="263.00461"
+       x2="128.25101"
+       y2="263.00461"
+       gradientTransform="matrix(2.3504688,0,0,0.42544705,-43.265645,-15.9138)"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <rect
+     width="600"
+     height="170"
+     fill="none"
+     id="rect2"
+     x="0"
+     y="0" />
+  <g
+     transform="matrix(0.56,0,0,0.56,-23.265644,4.0861997)"
+     fill="none"
+     stroke="url(#inkHeader)"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     id="g3"
+     style="stroke:url(#linearGradient7)">
+    <path
+       d="m 58,10 c 34,0 58,24 58,58 0,34 -24,58 -58,58"
+       stroke-width="16"
+       id="path2"
+       style="stroke:url(#linearGradient5)" />
+    <path
+       d="m 58,126 v 78 c 0,28 18,44 42,44 18,0 32,-12 32,-28 0,-16 -12,-28 -28,-28"
+       stroke-width="16"
+       id="path3"
+       style="stroke:url(#linearGradient6)" />
+  </g>
+  <text
+     x="71.73436"
+     y="42.086197"
+     fill="url(#inkHeader)"
+     font-family="Georgia, 'Times New Roman', serif"
+     font-size="50px"
+     font-weight="700"
+     letter-spacing="1.3"
+     id="text3"
+     style="fill:url(#linearGradient8)">BOOKS</text>
+  <text
+     x="71.73436"
+     y="83.086205"
+     fill="url(#inkHeader)"
+     font-family="Georgia, 'Times New Roman', serif"
+     font-size="38px"
+     font-weight="700"
+     letter-spacing="2"
+     id="text4"
+     style="fill:url(#linearGradient9)">ON</text>
+  <text
+     x="71.73436"
+     y="129.0862"
+     fill="url(#inkHeader)"
+     font-family="Georgia, 'Times New Roman', serif"
+     font-size="50px"
+     font-weight="700"
+     letter-spacing="1.3"
+     id="text5"
+     style="fill:url(#linearGradient10)">HOOKS</text>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>Books On Hooks Header Logo</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>

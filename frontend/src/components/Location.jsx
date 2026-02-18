@@ -56,7 +56,7 @@ export default function Location() {
 
   return (
     <section>
-      <h1>location</h1>
+      <h1>Books on Hooks Machine Locations</h1>
       {machines.length === 0 ? (
         <p>No machines exist.</p>
       ) : (
@@ -64,7 +64,7 @@ export default function Location() {
         {machines.map((machine) => (
           <li key={machine.id ?? machine.location}>
             <Link to={`/location/${machine.id}`}>
-              {machine.location} ({machine.rows}x{machine.columns})
+              {machine.location}
             </Link>
           </li>
         ))}

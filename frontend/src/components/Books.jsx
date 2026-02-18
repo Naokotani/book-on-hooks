@@ -56,7 +56,7 @@ export default function Books() {
 
   return (
     <section>
-      <h1>books</h1>
+      <h1>Books on Hooks Library</h1>
       {books.length === 0 ? (
         <p>No books exist.</p>
       ) : (

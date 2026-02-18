@@ -13,6 +13,15 @@ import (
 	"booksonhooks.ca/internal/sqlc"
 )
 
+const defaultImageDir = "/data/images"
+
+func imageDir() string {
+	if dir := os.Getenv("IMAGE_DIR"); dir != "" {
+		return dir
+	}
+	return defaultImageDir
+}
+
 func (db *Database) InsertBook(ctx context.Context,
 	book *domain.Book, file multipart.File,
 	header *multipart.FileHeader) (int64, error) {
@@ -39,12 +48,13 @@ func (db *Database) InsertBook(ctx context.Context,
 	}
 
 	filename := strconv.FormatInt(id, 10) + "_" + header.Filename
+	coversDir := filepath.Join(imageDir(), "covers")
 
-	if err := os.MkdirAll("./images/covers", 0o755); err != nil {
+	if err := os.MkdirAll(coversDir, 0o755); err != nil {
 		return 0, fmt.Errorf("failed to create images directory\n%s", err)
 	}
 
-	dst, err := os.Create(filepath.Join("./images/covers", filename))
+	dst, err := os.Create(filepath.Join(coversDir, filename))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create image file\n%s", err)
 	}

@@ -14,6 +14,15 @@ Stop everything:
 podman compose down
 ```
 
+## Scripts
+
+Helper scripts live in `scripts/`:
+
+- `./scripts/admin.sh counts`
+- `./scripts/admin.sh reset-database`
+- `./scripts/test.sh`
+- `./scripts/reload.sh`
+
 ## Services and Ports
 
 - API (`api`): `http://localhost:4000`
@@ -78,8 +87,8 @@ Uploaded book images are stored in the named volume `books-images`.
 
 That volume is mounted at:
 
-- `/usr/local/bin/images` in the `api` container
-- `/usr/src/app/api/images` in the `dev` container
+- `/data/images` in the `api` container
+- `/data/images` in the `dev` container
 
 This means image files persist across container restarts/rebuilds as long as the `books-images` volume is not removed.
 

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Books On Hooks Tab Icon</title>
+  <desc id="desc">Simple hook icon for browser tab use.</desc>
+
+  <defs>
+    <linearGradient id="inkTab" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f3e9d2" />
+      <stop offset="100%" stop-color="#d9c7a1" />
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="64" height="64" rx="12" fill="#1f1f1f" />
+  <g transform="translate(13,7) scale(0.2)" fill="none" stroke="url(#inkTab)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M58 10 C92 10 116 34 116 68 C116 102 92 126 58 126" stroke-width="16"/>
+    <path d="M58 126 L58 204 C58 232 76 248 100 248 C118 248 132 236 132 220 C132 204 120 192 104 192" stroke-width="16"/>
+  </g>
+</svg>
