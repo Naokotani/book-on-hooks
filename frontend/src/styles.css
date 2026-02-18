@@ -1,8 +1,8 @@
 :root {
   /*Styles*/
-  --line: solid 2px var(--lineColor);
   --headerHeight: 5rem;
   --footerHeight: 10rem;
+  --pageMargin: 5rem;
   --containerPadding: 10%;
 
   /*Elevations*/
@@ -118,8 +118,21 @@ body {
   color: var(--textColor);
 }
 
-main.layout {
+.layout {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+main.main-layout {
   min-height: calc(100vh - var(--headerHeight) - var(--footerHeight));
+}
+
+header,
+main.main-layout,
+footer {
+  padding-left: var(--pageMargin);
+  padding-right: var(--pageMargin);
 }
 
 /* Text */
@@ -257,7 +270,7 @@ header.mobile {
   left: 0;
   padding-left: 1rem;
   padding-right: 1rem;
-  width: 100vw;
+  width: 100%;
   line-height: var(--headerHeight);
 }
 
@@ -295,7 +308,7 @@ header {
 
 header.desktop {
   position: absolute;
-  width: 100vw;
+  width: 100%;
   top: 0;
   left: 0;
   right: 0;
@@ -344,6 +357,10 @@ nav a {
   --anchorText: var(--navText);
   color: var(--anchorText);
   font-size: var(--h5);
+}
+
+nav a + a {
+  margin-left: 1rem;
 }
 
 nav a:hover {
@@ -447,33 +464,13 @@ div.card-content {
 
 .machine-grid-location {
   max-width: 1200px;
+  grid-template-columns: repeat(var(--grid-cols), minmax(220px, 1fr));
 }
-
-.machine-grid-location.cols-1 { grid-template-columns: repeat(1, minmax(220px, 1fr)); }
-.machine-grid-location.cols-2 { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
-.machine-grid-location.cols-3 { grid-template-columns: repeat(3, minmax(220px, 1fr)); }
-.machine-grid-location.cols-4 { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
-.machine-grid-location.cols-5 { grid-template-columns: repeat(5, minmax(220px, 1fr)); }
-.machine-grid-location.cols-6 { grid-template-columns: repeat(6, minmax(220px, 1fr)); }
-.machine-grid-location.cols-7 { grid-template-columns: repeat(7, minmax(220px, 1fr)); }
-.machine-grid-location.cols-8 { grid-template-columns: repeat(8, minmax(220px, 1fr)); }
-.machine-grid-location.cols-9 { grid-template-columns: repeat(9, minmax(220px, 1fr)); }
-.machine-grid-location.cols-10 { grid-template-columns: repeat(10, minmax(220px, 1fr)); }
 
 .machine-grid-admin {
   max-width: 1000px;
+  grid-template-columns: repeat(var(--grid-cols), minmax(180px, 1fr));
 }
-
-.machine-grid-admin.cols-1 { grid-template-columns: repeat(1, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-2 { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-3 { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-4 { grid-template-columns: repeat(4, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-5 { grid-template-columns: repeat(5, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-6 { grid-template-columns: repeat(6, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-7 { grid-template-columns: repeat(7, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-8 { grid-template-columns: repeat(8, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-9 { grid-template-columns: repeat(9, minmax(180px, 1fr)); }
-.machine-grid-admin.cols-10 { grid-template-columns: repeat(10, minmax(180px, 1fr)); }
 
 .machine-slot-card {
   border: 1px solid #ccc;
@@ -491,6 +488,70 @@ div.card-content {
   gap: 6px;
 }
 
+/* Admin Forms */
+.admin-panel {
+  max-width: 56rem;
+}
+
+.admin-form {
+  max-width: 36rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.admin-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-field label {
+  font-family: var(--headingFont);
+  font-size: 0.95rem;
+}
+
+.admin-input {
+  width: 100%;
+  border: 1px solid var(--borderColor);
+  background: var(--cardBg);
+  color: var(--textColor);
+  border-radius: 0.35rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.admin-input:focus {
+  outline: 2px solid var(--navText);
+  outline-offset: 1px;
+}
+
+.admin-btn {
+  width: fit-content;
+  border: 1px solid var(--borderColor);
+  background: var(--headerColor);
+  color: var(--textColor);
+  border-radius: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+.admin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-message {
+  width: fit-content;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.35rem;
+}
+
+.admin-message-success {
+  border: 1px solid #2e8b57;
+}
+
+.admin-message-error {
+  border: 1px solid #b22222;
+}
+
 /* Footer */
 
 footer {
@@ -498,7 +559,7 @@ footer {
 }
 
 footer {
-  width: 100vw;
+  width: 100%;
   background: var(--footerColor);
   height: var(--footerHeight);
 }

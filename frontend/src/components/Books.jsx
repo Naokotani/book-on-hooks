@@ -47,11 +47,11 @@ export default function Books() {
   }, []);
 
   if (loading) {
-    return <h1>books (loading...)</h1>;
+    return <h1>books...</h1>;
   }
 
   if (error) {
-    return <h1>books (error: {error})</h1>;
+    return <h1>books... {error}</h1>;
   }
 
   return (

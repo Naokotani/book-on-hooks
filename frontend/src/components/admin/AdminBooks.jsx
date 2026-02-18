@@ -46,11 +46,11 @@ export default function AdminBooks() {
   }, []);
 
   if (loading) {
-    return <h1>list books (loading...)</h1>;
+    return <h1>list books...</h1>;
   }
 
   if (error) {
-    return <h1>list books (error: {error})</h1>;
+    return <h1>list books... {error}</h1>;
   }
 
   return (

@@ -47,11 +47,11 @@ export default function Location() {
   }, []);
 
   if (loading) {
-    return <h1>location (loading...)</h1>;
+    return <h1>location...</h1>;
   }
 
   if (error) {
-    return <h1>location (error: {error})</h1>;
+    return <h1>location... {error}</h1>;
   }
 
   return (

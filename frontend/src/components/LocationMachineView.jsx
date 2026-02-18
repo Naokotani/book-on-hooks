@@ -5,11 +5,6 @@ function keyFor(row, col) {
   return `${row}-${col}`;
 }
 
-function colsClass(colCount) {
-  const normalized = Math.min(Math.max(colCount, 1), 10);
-  return `cols-${normalized}`;
-}
-
 export default function LocationMachineView() {
   const { id } = useParams();
   const [machineData, setMachineData] = useState(null);
@@ -57,11 +52,11 @@ export default function LocationMachineView() {
   }, [id]);
 
   if (loading) {
-    return <h1>location details (loading...)</h1>;
+    return <h1>location details...</h1>;
   }
 
   if (error) {
-    return <h1>location details (error: {error})</h1>;
+    return <h1>location details... {error}</h1>;
   }
 
   const machine = machineData?.machine;
@@ -97,7 +92,10 @@ export default function LocationMachineView() {
       {rowCount <= 0 || colCount <= 0 ? (
         <p>Machine has no grid dimensions.</p>
       ) : (
-        <div className={`machine-grid machine-grid-location ${colsClass(colCount)}`}>
+        <div
+          className="machine-grid machine-grid-location"
+          style={{ "--grid-cols": colCount }}
+        >
           {Array.from({ length: rowCount }).map((_, row) =>
             Array.from({ length: colCount }).map((__, col) => {
               const loadedBook = bySlot.get(keyFor(row, col));

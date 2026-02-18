@@ -42,11 +42,11 @@ export default function MarkdownPage({ slug, title }) {
   }, [slug]);
 
   if (loading) {
-    return <h1>{title} (loading...)</h1>;
+    return <h1>{title}...</h1>;
   }
 
   if (error) {
-    return <h1>{title} (error: {error})</h1>;
+    return <h1>{title}... {error}</h1>;
   }
 
   return (

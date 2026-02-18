@@ -64,6 +64,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Containerfile.vite
+    working_dir: /usr/src/app
+    command: ["sh", "-lc", "npm install && npm run dev -- --host 0.0.0.0"]
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/usr/src/app:Z
     networks:
       - backend
     ports:

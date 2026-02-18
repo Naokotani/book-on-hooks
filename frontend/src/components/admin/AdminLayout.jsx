@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import AdminNav from "./AdminNav";
+import Footer from "../Footer";
 
 export default function AdminLayout() {
   return (
@@ -7,9 +8,10 @@ export default function AdminLayout() {
       <header>
         <AdminNav />
       </header>
-      <main>
+      <main className="main-layout">
         <Outlet />
       </main>
+      <Footer />
     </>
   );
 }

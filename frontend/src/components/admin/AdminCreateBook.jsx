@@ -47,12 +47,13 @@ export default function AdminCreateBook() {
   }
 
   return (
-    <section>
+    <section className="admin-panel">
       <h1>create book</h1>
-      <form onSubmit={onSubmit} encType="multipart/form-data">
-        <div>
+      <form className="admin-form" onSubmit={onSubmit} encType="multipart/form-data">
+        <div className="admin-field">
           <label htmlFor="title">Title</label>
           <input
+            className="admin-input"
             id="title"
             name="title"
             value={title}
@@ -61,9 +62,10 @@ export default function AdminCreateBook() {
           />
         </div>
 
-        <div>
+        <div className="admin-field">
           <label htmlFor="author">Author</label>
           <input
+            className="admin-input"
             id="author"
             name="author"
             value={author}
@@ -72,9 +74,10 @@ export default function AdminCreateBook() {
           />
         </div>
 
-        <div>
+        <div className="admin-field">
           <label htmlFor="summary">Summary</label>
           <textarea
+            className="admin-input"
             id="summary"
             name="summary"
             value={summary}
@@ -83,9 +86,10 @@ export default function AdminCreateBook() {
           />
         </div>
 
-        <div>
+        <div className="admin-field">
           <label htmlFor="price">Price</label>
           <input
+            className="admin-input"
             id="price"
             name="price"
             value={price}
@@ -94,9 +98,10 @@ export default function AdminCreateBook() {
           />
         </div>
 
-        <div>
+        <div className="admin-field">
           <label htmlFor="image">Image</label>
           <input
+            className="admin-input"
             id="image"
             name="image"
             type="file"
@@ -105,13 +110,13 @@ export default function AdminCreateBook() {
           />
         </div>
 
-        <button type="submit" disabled={submitting}>
+        <button className="admin-btn" type="submit" disabled={submitting}>
           {submitting ? "Creating..." : "Create Book"}
         </button>
       </form>
 
-      {message ? <p>{message}</p> : null}
-      {error ? <p>error: {error}</p> : null}
+      {message ? <p className="admin-message admin-message-success">{message}</p> : null}
+      {error ? <p className="admin-message admin-message-error">error: {error}</p> : null}
     </section>
   );
 }

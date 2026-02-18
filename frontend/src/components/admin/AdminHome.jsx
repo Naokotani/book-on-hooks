@@ -47,11 +47,11 @@ export default function AdminHome() {
   }, []);
 
   if (loading) {
-    return <h1>admin (loading...)</h1>;
+    return <h1>admin...</h1>;
   }
 
   if (error) {
-    return <h1>admin (error: {error})</h1>;
+    return <h1>admin... {error}</h1>;
   }
 
   return (

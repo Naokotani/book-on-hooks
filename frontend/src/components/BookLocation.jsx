@@ -48,11 +48,11 @@ export default function BookLocation() {
   }, [id]);
 
   if (loading) {
-    return <h1>book locations (loading...)</h1>;
+    return <h1>book locations...</h1>;
   }
 
   if (error) {
-    return <h1>book locations (error: {error})</h1>;
+    return <h1>book locations... {error}</h1>;
   }
 
   if (!data) {

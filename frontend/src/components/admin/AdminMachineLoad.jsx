@@ -5,11 +5,6 @@ function keyFor(row, col) {
   return `${row}-${col}`;
 }
 
-function colsClass(colCount) {
-  const normalized = Math.min(Math.max(colCount, 1), 10);
-  return `cols-${normalized}`;
-}
-
 export default function AdminMachineLoad() {
   const { id } = useParams();
   const [machineData, setMachineData] = useState(null);
@@ -148,11 +143,11 @@ export default function AdminMachineLoad() {
   }
 
   if (loading) {
-    return <h1>load machine (loading...)</h1>;
+    return <h1>load machine...</h1>;
   }
 
   if (error) {
-    return <h1>load machine (error: {error})</h1>;
+    return <h1>load machine... {error}</h1>;
   }
 
   const machine = machineData?.machine;
@@ -160,10 +155,10 @@ export default function AdminMachineLoad() {
   const colCount = Number(machine?.columns) || 0;
 
   return (
-    <section>
+    <section className="admin-panel">
       <h1>load machine</h1>
       {!machine ? (
-        <p>No machine exists for this id.</p>
+        <p className="admin-message admin-message-error">No machine exists for this id.</p>
       ) : (
         <>
           <p>
@@ -173,15 +168,18 @@ export default function AdminMachineLoad() {
           {rowCount <= 0 || colCount <= 0 ? (
             <p>Machine has no grid dimensions.</p>
           ) : (
-            <div className={`machine-grid machine-grid-admin ${colsClass(colCount)}`}>
+            <div
+              className="machine-grid machine-grid-admin"
+              style={{ "--grid-cols": colCount }}
+            >
               {Array.from({ length: rowCount }).map((_, row) =>
                 Array.from({ length: colCount }).map((__, col) => {
                   const slotKey = keyFor(row, col);
                   const selected = slotSelections[slotKey] ?? "";
                   return (
-                    <label key={slotKey} className="machine-slot-label">
+                    <label key={slotKey} className="machine-slot-label admin-field">
                       Slot {row},{col}
-                      <select value={selected} onChange={(e) => updateSlot(row, col, e.target.value)}>
+                      <select className="admin-input" value={selected} onChange={(e) => updateSlot(row, col, e.target.value)}>
                         <option value="">Empty</option>
                         {books.map((book) => (
                           <option key={book.id} value={String(book.id)}>
@@ -197,12 +195,12 @@ export default function AdminMachineLoad() {
           )}
 
           <p>
-            <button type="button" onClick={saveMachineLoad} disabled={saving || rowCount <= 0 || colCount <= 0}>
+            <button className="admin-btn" type="button" onClick={saveMachineLoad} disabled={saving || rowCount <= 0 || colCount <= 0}>
               {saving ? "Saving..." : "Save Machine Load"}
             </button>
           </p>
 
-          {message ? <p>{message}</p> : null}
+          {message ? <p className="admin-message admin-message-success">{message}</p> : null}
         </>
       )}
     </section>

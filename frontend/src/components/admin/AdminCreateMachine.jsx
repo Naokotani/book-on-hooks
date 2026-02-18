@@ -45,12 +45,13 @@ export default function AdminCreateMachine() {
   }
 
   return (
-    <section>
+    <section className="admin-panel">
       <h1>create machine</h1>
-      <form onSubmit={onSubmit}>
-        <div>
+      <form className="admin-form" onSubmit={onSubmit}>
+        <div className="admin-field">
           <label htmlFor="location">Location</label>
           <input
+            className="admin-input"
             id="location"
             name="location"
             value={location}
@@ -59,9 +60,10 @@ export default function AdminCreateMachine() {
           />
         </div>
 
-        <div>
+        <div className="admin-field">
           <label htmlFor="rows">Rows</label>
           <input
+            className="admin-input"
             id="rows"
             name="rows"
             type="number"
@@ -72,9 +74,10 @@ export default function AdminCreateMachine() {
           />
         </div>
 
-        <div>
+        <div className="admin-field">
           <label htmlFor="cols">Cols</label>
           <input
+            className="admin-input"
             id="cols"
             name="cols"
             type="number"
@@ -85,13 +88,13 @@ export default function AdminCreateMachine() {
           />
         </div>
 
-        <button type="submit" disabled={submitting}>
+        <button className="admin-btn" type="submit" disabled={submitting}>
           {submitting ? "Creating..." : "Create Machine"}
         </button>
       </form>
 
-      {message ? <p>{message}</p> : null}
-      {error ? <p>error: {error}</p> : null}
+      {message ? <p className="admin-message admin-message-success">{message}</p> : null}
+      {error ? <p className="admin-message admin-message-error">error: {error}</p> : null}
     </section>
   );
 }
