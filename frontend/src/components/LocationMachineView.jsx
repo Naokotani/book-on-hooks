@@ -5,6 +5,11 @@ function keyFor(row, col) {
   return `${row}-${col}`;
 }
 
+function colsClass(colCount) {
+  const normalized = Math.min(Math.max(colCount, 1), 10);
+  return `cols-${normalized}`;
+}
+
 export default function LocationMachineView() {
   const { id } = useParams();
   const [machineData, setMachineData] = useState(null);
@@ -92,28 +97,14 @@ export default function LocationMachineView() {
       {rowCount <= 0 || colCount <= 0 ? (
         <p>Machine has no grid dimensions.</p>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${colCount}, minmax(220px, 1fr))`,
-            gap: "12px",
-            maxWidth: "1200px",
-          }}
-        >
+        <div className={`machine-grid machine-grid-location ${colsClass(colCount)}`}>
           {Array.from({ length: rowCount }).map((_, row) =>
             Array.from({ length: colCount }).map((__, col) => {
               const loadedBook = bySlot.get(keyFor(row, col));
 
               return (
-                <article
-                  key={keyFor(row, col)}
-                  style={{
-                    border: "1px solid #ccc",
-                    borderRadius: "6px",
-                    padding: "10px",
-                  }}
-                >
-                  <h2 style={{ marginTop: 0 }}>Slot {row},{col}</h2>
+                <article key={keyFor(row, col)} className="machine-slot-card">
+                  <h2 className="machine-slot-title">Slot {row},{col}</h2>
                   {!loadedBook ? (
                     <p>Empty</p>
                   ) : (

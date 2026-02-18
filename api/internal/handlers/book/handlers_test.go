@@ -15,10 +15,11 @@ import (
 // --- Mocks ---
 
 type mockBookRepo struct {
-	getBooksFn    func() ([]domain.Book, error)
-	getBookByIDFn func(id int64) (*domain.Book, error)
-	updateBookFn  func(book *domain.Book) error
-	deleteBookFn  func(id int64) error
+	getBooksFn         func() ([]domain.Book, error)
+	getBookByIDFn      func(id int64) (*domain.Book, error)
+	getBookLocationsFn func(bookID int64) (*domain.BookLocation, error)
+	updateBookFn       func(book *domain.Book) error
+	deleteBookFn       func(id int64) error
 }
 
 func (m *mockBookRepo) GetBooks(ctx context.Context) ([]domain.Book, error) {
@@ -27,6 +28,13 @@ func (m *mockBookRepo) GetBooks(ctx context.Context) ([]domain.Book, error) {
 
 func (m *mockBookRepo) GetBookByID(ctx context.Context, id int64) (*domain.Book, error) {
 	return m.getBookByIDFn(id)
+}
+
+func (m *mockBookRepo) GetBookLocations(ctx context.Context, bookID int64) (*domain.BookLocation, error) {
+	if m.getBookLocationsFn == nil {
+		return &domain.BookLocation{}, nil
+	}
+	return m.getBookLocationsFn(bookID)
 }
 
 func (m *mockBookRepo) UpdateBook(ctx context.Context, book *domain.Book) error {

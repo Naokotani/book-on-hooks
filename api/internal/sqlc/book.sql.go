@@ -39,6 +39,63 @@ func (q *Queries) GetBookByID(ctx context.Context, id int64) (Book, error) {
 	return i, err
 }
 
+const getBookLocations = `-- name: GetBookLocations :many
+SELECT
+    b.id AS book_id,
+    b.title,
+    b.author,
+    b.summary,
+    b.image,
+    b.price,
+    m.id AS machine_id,
+    m.location
+FROM book_machine bm
+JOIN book b ON b.id = bm.book_id
+JOIN machine m ON m.id = bm.machine_id
+WHERE bm.book_id = $1
+ORDER BY m.location
+`
+
+type GetBookLocationsRow struct {
+	BookID    int64
+	Title     string
+	Author    string
+	Summary   string
+	Image     string
+	Price     string
+	MachineID int64
+	Location  string
+}
+
+func (q *Queries) GetBookLocations(ctx context.Context, bookID int64) ([]GetBookLocationsRow, error) {
+	rows, err := q.db.Query(ctx, getBookLocations, bookID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetBookLocationsRow
+	for rows.Next() {
+		var i GetBookLocationsRow
+		if err := rows.Scan(
+			&i.BookID,
+			&i.Title,
+			&i.Author,
+			&i.Summary,
+			&i.Image,
+			&i.Price,
+			&i.MachineID,
+			&i.Location,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertBook = `-- name: InsertBook :one
 INSERT INTO book (
     title,

@@ -16,6 +16,7 @@ import (
 type BookRepo interface {
 	GetBooks(ctx context.Context) ([]domain.Book, error)
 	GetBookByID(ctx context.Context, id int64) (*domain.Book, error)
+	GetBookLocations(ctx context.Context, bookID int64) (*domain.BookLocation, error)
 	UpdateBook(ctx context.Context, book *domain.Book) error
 	DeleteBook(ctx context.Context, id int64) error
 }
@@ -70,6 +71,24 @@ func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusOK, book)
+}
+
+func (h *BookHandler) GetBookLocations(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	bookLocation, err := h.repo.GetBookLocations(r.Context(), int64(id))
+	if err != nil {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, bookLocation)
 }
 
 func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {

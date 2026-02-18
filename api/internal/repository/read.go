@@ -48,6 +48,49 @@ func (db *Database) GetBooks(ctx context.Context) ([]domain.Book, error) {
 	return mapBooks(books), nil
 }
 
+func (db *Database) GetBookLocations(ctx context.Context, bookID int64) (*domain.BookLocation, error) {
+	rows, err := db.Q.GetBookLocations(ctx, bookID)
+	if err != nil {
+		book, err := db.Q.GetBookByID(ctx, bookID)
+		if err != nil {
+			return nil, err
+		}
+
+		return &domain.BookLocation{
+			BookID:    book.ID,
+			Title:     book.Title,
+			Author:    book.Author,
+			Summary:   book.Summary,
+			Image:     book.Image,
+			Price:     book.Price,
+			Locations: make([]domain.MachineLocation, 0),
+		}, nil
+	}
+
+	if len(rows) == 0 {
+		return nil, pgx.ErrNoRows
+	}
+
+	result := &domain.BookLocation{
+		BookID:    rows[0].BookID,
+		Title:     rows[0].Title,
+		Author:    rows[0].Author,
+		Summary:   rows[0].Summary,
+		Image:     rows[0].Image,
+		Price:     rows[0].Price,
+		Locations: make([]domain.MachineLocation, 0, len(rows)),
+	}
+
+	for _, row := range rows {
+		result.Locations = append(result.Locations, domain.MachineLocation{
+			MachineID: row.MachineID,
+			Location:  row.Location,
+		})
+	}
+
+	return result, nil
+}
+
 func (db *Database) GetMachines(ctx context.Context) ([]domain.Machine, error) {
 	machines, err := db.Q.ListMachines(ctx)
 	if err != nil {

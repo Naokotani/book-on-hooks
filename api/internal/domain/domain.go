@@ -34,3 +34,18 @@ type MachineWithBooks struct {
 	Machine Machine      `json:"machine"`
 	Books   []LoadedBook `json:"books"`
 }
+
+type MachineLocation struct {
+	MachineID int64  `json:"machine_id"`
+	Location  string `json:"location"`
+}
+
+type BookLocation struct {
+	BookID    int64             `json:"book_id"`
+	Title     string            `json:"title"`
+	Author    string            `json:"author"`
+	Summary   string            `json:"summary"`
+	Image     string            `json:"image"`
+	Price     string            `json:"price"`
+	Locations []MachineLocation `json:"locations"`
+}

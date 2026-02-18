@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Books() {
   const [books, setBooks] = useState([]);
@@ -62,7 +63,9 @@ export default function Books() {
       <ul>
         {books.map((book) => (
           <li key={book.id ?? `${book.title}-${book.author}`}>
-            {book.title} by {book.author}
+            <Link to={`/books/${book.id}/locations`}>
+              {book.title} by {book.author}
+            </Link>
           </li>
         ))}
       </ul>

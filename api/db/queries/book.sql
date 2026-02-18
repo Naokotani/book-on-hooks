@@ -37,3 +37,19 @@ WHERE id = $1;
 -- name: DeleteBook :exec
 DELETE FROM book
 WHERE id = $1;
+
+-- name: GetBookLocations :many
+SELECT
+    b.id AS book_id,
+    b.title,
+    b.author,
+    b.summary,
+    b.image,
+    b.price,
+    m.id AS machine_id,
+    m.location
+FROM book_machine bm
+JOIN book b ON b.id = bm.book_id
+JOIN machine m ON m.id = bm.machine_id
+WHERE bm.book_id = $1
+ORDER BY m.location;

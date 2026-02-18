@@ -5,6 +5,11 @@ function keyFor(row, col) {
   return `${row}-${col}`;
 }
 
+function colsClass(colCount) {
+  const normalized = Math.min(Math.max(colCount, 1), 10);
+  return `cols-${normalized}`;
+}
+
 export default function AdminMachineLoad() {
   const { id } = useParams();
   const [machineData, setMachineData] = useState(null);
@@ -168,20 +173,13 @@ export default function AdminMachineLoad() {
           {rowCount <= 0 || colCount <= 0 ? (
             <p>Machine has no grid dimensions.</p>
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${colCount}, minmax(180px, 1fr))`,
-                gap: "12px",
-                maxWidth: "1000px",
-              }}
-            >
+            <div className={`machine-grid machine-grid-admin ${colsClass(colCount)}`}>
               {Array.from({ length: rowCount }).map((_, row) =>
                 Array.from({ length: colCount }).map((__, col) => {
                   const slotKey = keyFor(row, col);
                   const selected = slotSelections[slotKey] ?? "";
                   return (
-                    <label key={slotKey} style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <label key={slotKey} className="machine-slot-label">
                       Slot {row},{col}
                       <select value={selected} onChange={(e) => updateSlot(row, col, e.target.value)}>
                         <option value="">Empty</option>
