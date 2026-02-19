@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
 
 export default function BookLocation() {
@@ -68,11 +69,9 @@ export default function BookLocation() {
 
   return (
     <section>
-      <h1>book locations</h1>
-      <p><strong>Title:</strong> {data.title}</p>
-      <p><strong>Author:</strong> {data.author}</p>
-      <p><strong>Summary:</strong> {data.summary}</p>
-      <p><strong>Image:</strong> {data.image}</p>
+      <h1>{data.title}</h1>
+      <p className="h5"><strong>Author:</strong> {data.author}</p>
+      <p>{data.summary}</p>
       <p><strong>Price:</strong> {data.price}</p>
 
       <h2>Locations</h2>
@@ -82,7 +81,9 @@ export default function BookLocation() {
         <ul>
           {locations.map((location) => (
             <li key={location.machine_id}>
-              #{location.machine_id} - {location.location}
+              <Link to={`/location/${location.machine_id}`}>
+                #{location.machine_id} - {location.location}
+              </Link>
             </li>
           ))}
         </ul>

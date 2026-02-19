@@ -15,14 +15,7 @@ func (db *Database) GetBookByID(ctx context.Context, id int64) (*domain.Book, er
 		return nil, err
 	}
 
-	return &domain.Book{
-		ID:      book.ID,
-		Title:   book.Title,
-		Author:  book.Author,
-		Summary: book.Summary,
-		Image:   book.Image,
-		Price:   book.Price,
-	}, nil
+	return mapBook(book), nil
 }
 
 func (db *Database) GetBookByRowAndCol(ctx context.Context, row, col int) (*domain.Book, error) {
@@ -133,24 +126,7 @@ func (db *Database) GetMachineWithBooks(ctx context.Context, id int64) (*domain.
 			continue
 		}
 
-		loaded := domain.LoadedBook{
-			Book: domain.Book{
-				ID:      row.BookID.Int64,
-				Title:   row.Title.String,
-				Author:  row.Author.String,
-				Summary: row.Summary.String,
-				Image:   row.Image.String,
-				Price:   row.Price.String,
-			},
-		}
-		if row.Row.Valid {
-			loaded.Row = int(row.Row.Int32)
-		}
-		if row.Col.Valid {
-			loaded.Col = int(row.Col.Int32)
-		}
-
-		out.Books = append(out.Books, loaded)
+		out.Books = append(out.Books, mapLoadedBook(row))
 	}
 
 	return out, nil

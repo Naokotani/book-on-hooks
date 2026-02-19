@@ -52,3 +52,25 @@ func mapMachine(machine sqlc.Machine) *domain.Machine {
 		Rows:     int(machine.Rows),
 	}
 }
+
+func mapLoadedBook(row sqlc.GetMachineWithBooksRow) domain.LoadedBook {
+	loaded := domain.LoadedBook{
+		Book: domain.Book{
+			ID:      row.BookID.Int64,
+			Title:   row.Title.String,
+			Author:  row.Author.String,
+			Summary: row.Summary.String,
+			Image:   row.Image.String,
+			Price:   row.Price.String,
+		},
+	}
+
+	if row.Row.Valid {
+		loaded.Row = int(row.Row.Int32)
+	}
+	if row.Col.Valid {
+		loaded.Col = int(row.Col.Int32)
+	}
+
+	return loaded
+}
