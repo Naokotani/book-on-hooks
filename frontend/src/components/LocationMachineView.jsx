@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 function keyFor(row, col) {
   return `${row}-${col}`;
@@ -7,6 +7,7 @@ function keyFor(row, col) {
 
 export default function LocationMachineView() {
   const { id } = useParams();
+  const location = useLocation();
   const [machineData, setMachineData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -97,6 +98,10 @@ export default function LocationMachineView() {
             Array.from({ length: colCount }).map((__, col) => {
               const loadedBook = bySlot.get(keyFor(row, col));
 
+              const params = new URLSearchParams(location.search);
+              params.set("machine", String(machine.id));
+              params.set("source", "location-grid");
+
               return (
                 <article key={keyFor(row, col)} className="machine-slot-card">
                   {!loadedBook ? (
@@ -104,7 +109,7 @@ export default function LocationMachineView() {
                   ) : (
                     <Link
                       className="machine-book-cover-link"
-                      to={`/books/${loadedBook.id}/summary`}
+                      to={`/books/${loadedBook.id}/summary?${params.toString()}`}
                     >
                       <div className="machine-book-cover-wrap">
                         {loadedBook.image ? (

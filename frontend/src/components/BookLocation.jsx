@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 export default function BookLocation() {
   const { id } = useParams();
+  const location = useLocation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -16,7 +16,7 @@ export default function BookLocation() {
         setLoading(true);
         setError("");
 
-        const res = await fetch(`/api/books/${id}/summary`);
+        const res = await fetch(`/api/books/${id}/summary${location.search}`);
         if (res.status === 404) {
           if (!cancelled) {
             setData(null);
@@ -46,7 +46,7 @@ export default function BookLocation() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, location.search]);
 
   if (loading) {
     return <h1>book locations...</h1>;
