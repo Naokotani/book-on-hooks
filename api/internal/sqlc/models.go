@@ -30,6 +30,7 @@ type BookMetric struct {
 	MachineID int64
 	Date      pgtype.Date
 	Qr        bool
+	Source    pgtype.Text
 }
 
 type Machine struct {

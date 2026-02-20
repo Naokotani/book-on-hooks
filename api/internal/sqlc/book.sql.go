@@ -137,9 +137,10 @@ INSERT INTO book_metrics (
     book_id,
     machine_id,
     date,
-    qr
+    qr,
+    source
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3, $4, $5
 )
 RETURNING id
 `
@@ -149,6 +150,7 @@ type InsertBookMetricParams struct {
 	MachineID int64
 	Date      pgtype.Date
 	Qr        bool
+	Source    pgtype.Text
 }
 
 func (q *Queries) InsertBookMetric(ctx context.Context, arg InsertBookMetricParams) (int64, error) {
@@ -157,6 +159,7 @@ func (q *Queries) InsertBookMetric(ctx context.Context, arg InsertBookMetricPara
 		arg.MachineID,
 		arg.Date,
 		arg.Qr,
+		arg.Source,
 	)
 	var id int64
 	err := row.Scan(&id)
