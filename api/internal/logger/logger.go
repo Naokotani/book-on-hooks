@@ -15,12 +15,13 @@ const (
 	reset     = "\033[0m"
 	infoLevel = "info"
 	warnLevel = "warn"
-	errLevel  = "err"
+	errLevel  = "error"
 )
 
 type Logger struct {
 	level    string
 	infoLog  *log.Logger
+	// ErrorLog is exported so it can be assigned to http.Server.ErrorLog.
 	ErrorLog *log.Logger
 	warnLog  *log.Logger
 }
