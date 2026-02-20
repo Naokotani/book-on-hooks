@@ -3,6 +3,8 @@ package book
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,9 +12,9 @@ import (
 	"strings"
 
 	"booksonhooks.ca/internal/domain"
-	"booksonhooks.ca/internal/forms"
 	"booksonhooks.ca/internal/httpErrors"
 	"booksonhooks.ca/internal/logger"
+	"github.com/jackc/pgx/v5"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -22,22 +24,22 @@ type BookRepo interface {
 	GetBooks(ctx context.Context) ([]domain.Book, error)
 	GetBookByID(ctx context.Context, id int64) (*domain.Book, error)
 	GetBookLocations(ctx context.Context, bookID int64) (*domain.BookLocation, error)
+	InsertBook(ctx context.Context, book *domain.Book, file multipart.File, header *multipart.FileHeader) (int64, error)
 	UpdateBook(ctx context.Context, book *domain.Book) error
-	DeleteBook(ctx context.Context, id int64) error
+	UpdateBookImage(ctx context.Context, id int64, file multipart.File, header *multipart.FileHeader) (string, error)
+	DeleteBook(ctx context.Context, id int64) (string, error)
+	InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool) (int64, error)
 }
 
 type BookHandler struct {
-	form *forms.Form
 	log  *logger.Logger
 	repo BookRepo
 }
 
-func New(form *forms.Form,
-	log *logger.Logger,
+func New(log *logger.Logger,
 	repo BookRepo) *BookHandler {
 
 	return &BookHandler{
-		form: form,
 		log:  log,
 		repo: repo,
 	}
@@ -47,13 +49,9 @@ func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
 	books, err := h.repo.GetBooks(r.Context())
 
 	if err != nil {
-		httpErrors.NotFound(w)
-		h.log.Error("Failed to read books. %s", err)
+		h.log.Error("failed to read books: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
-	}
-
-	for _, b := range books {
-		h.log.Info("Book: %v", b)
 	}
 
 	h.writeJSON(w, http.StatusOK, books)
@@ -70,14 +68,19 @@ func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
 
 	book, err := h.repo.GetBookByID(r.Context(), int64(id))
 	if err != nil {
-		httpErrors.NotFound(w)
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to get book: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
 
 	h.writeJSON(w, http.StatusOK, book)
 }
 
-func (h *BookHandler) GetBookLocations(w http.ResponseWriter, r *http.Request) {
+func (h *BookHandler) GetBookSummary(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 
 	id, err := strconv.Atoi(params.ByName("id"))
@@ -86,9 +89,36 @@ func (h *BookHandler) GetBookLocations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isQr, err := parseOptionalBool(r.URL.Query().Get("is_qr"))
+
+	if err != nil {
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	machineID, err := parseOptionalInt64(r.URL.Query().Get("machine"))
+
+	if err != nil {
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	if machineID > 0 {
+		if _, err := h.repo.InsertBookMetric(r.Context(), int64(id), machineID, isQr); err != nil {
+			h.log.Error("failed to insert book metric: book_id=%d machine_id=%d is_qr=%t err=%v", id, machineID, isQr, err)
+			httpErrors.ServerError(w, http.StatusInternalServerError)
+			return
+		}
+	}
+
 	bookLocation, err := h.repo.GetBookLocations(r.Context(), int64(id))
 	if err != nil {
-		httpErrors.NotFound(w)
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to get book summary: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -98,30 +128,47 @@ func (h *BookHandler) GetBookLocations(w http.ResponseWriter, r *http.Request) {
 func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		h.log.Error("Failed to parse form: %v", err)
+		h.log.Error("failed to parse form: %v", err)
 		h.writeJSON(w, http.StatusBadRequest, map[string]any{
 			"error": "failed to parse multipart form",
 		})
 		return
 	}
 
-	id, form, httpErr := forms.BookFormService(h.form, r)
+	createReq, fieldErrors := validateCreateBookMetadata(r)
+	if len(fieldErrors) > 0 {
+		h.log.Warn("invalid create-book payload: field_errors=%v", fieldErrors)
+		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
+			"error":        "failed to validate form",
+			"field_errors": fieldErrors,
+		})
+		return
+	}
 
-	if httpErr != nil {
-		response := map[string]any{
-			"error": httpErr.Error(),
-		}
-		if form != nil && len(form.FieldErrors) > 0 {
-			response["field_errors"] = form.FieldErrors
-		}
-		h.writeJSON(w, httpErr.Status, response)
+	file, header, fieldErrors := validateBookImage(r)
+	if len(fieldErrors) > 0 {
+		h.log.Warn("invalid create-book image: field_errors=%v", fieldErrors)
+		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
+			"error": "failed to upload file",
+			"field_errors": fieldErrors,
+		})
+		return
+	}
+	defer file.Close()
+
+	id, err := h.repo.InsertBook(r.Context(), mapBookCreateRequestToBook(createReq), file, header)
+	if err != nil {
+		h.log.Error("failed to insert book: %v", err)
+		h.writeJSON(w, http.StatusInternalServerError, map[string]any{
+			"error": "failed to insert book",
+		})
 		return
 	}
 
 	book, err := h.repo.GetBookByID(r.Context(), id)
 
 	if err != nil {
-		h.log.Error("Failed to retrieve newly created book: %v", err)
+		h.log.Error("failed to retrieve newly created book: %v", err)
 		h.writeJSON(w, http.StatusInternalServerError, map[string]any{
 			"error": "book was created but could not be retrieved",
 			"id":    id,
@@ -140,26 +187,92 @@ func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload struct {
-		Title   string `json:"title"`
-		Author  string `json:"author"`
-		Summary string `json:"summary"`
-		Price   string `json:"price"`
-	}
+	var payload domain.BookUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		httpErrors.ClientError(w, http.StatusBadRequest)
 		return
 	}
 
-	book := &domain.Book{
-		ID:      int64(id),
-		Title:   payload.Title,
-		Author:  payload.Author,
-		Summary: payload.Summary,
-		Price:   payload.Price,
+	metadata := bookCreateRequest{
+		Title:   strings.TrimSpace(payload.Title),
+		Author:  strings.TrimSpace(payload.Author),
+		Summary: strings.TrimSpace(payload.Summary),
+		Price:   strings.TrimSpace(payload.Price),
+	}
+	if fieldErrors := validateBookMetadata(metadata); len(fieldErrors) > 0 {
+		h.log.Warn("invalid update-book payload: field_errors=%v", fieldErrors)
+		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
+			"error":        "failed to validate form",
+			"field_errors": fieldErrors,
+		})
+		return
 	}
 
+	payload.Title = metadata.Title
+	payload.Author = metadata.Author
+	payload.Summary = metadata.Summary
+	payload.Price = metadata.Price
+
+	book := mapBookUpdateRequestToBook(int64(id), payload)
+
 	if err := h.repo.UpdateBook(r.Context(), book); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to update book: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, book)
+}
+
+func (h *BookHandler) UpdateBookImage(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id <= 0 {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	file, header, fieldErrors := validateBookImage(r)
+	if len(fieldErrors) > 0 {
+		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
+			"error":        "failed to validate form",
+			"field_errors": fieldErrors,
+		})
+		return
+	}
+	defer file.Close()
+
+	warning, err := h.repo.UpdateBookImage(r.Context(), int64(id), file, header)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to update book image: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+	if warning != "" {
+		h.log.Warn("%s", warning)
+	}
+
+	book, err := h.repo.GetBookByID(r.Context(), int64(id))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to fetch book after image update: %v", err)
 		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
@@ -175,15 +288,24 @@ func (h *BookHandler) DeleteBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.DeleteBook(r.Context(), int64(id)); err != nil {
+	warning, err := h.repo.DeleteBook(r.Context(), int64(id))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to delete book: %v", err)
 		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
+	}
+	if warning != "" {
+		h.log.Warn("%s", warning)
 	}
 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *BookHandler) GetImage(w http.ResponseWriter, r *http.Request) {
+func (h *BookHandler) GetBookImage(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 	image := params.ByName("image")
 
@@ -217,4 +339,22 @@ func imageDir() string {
 		return dir
 	}
 	return defaultImageDir
+}
+
+func parseOptionalBool(v string) (bool, error) {
+	if v == "" {
+		return false, nil
+	}
+	return strconv.ParseBool(v)
+}
+
+func parseOptionalInt64(v string) (int64, error) {
+	if v == "" {
+		return 0, nil
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
+	if err != nil || n <= 0 {
+		return 0, errors.New("invalid int64")
+	}
+	return n, nil
 }

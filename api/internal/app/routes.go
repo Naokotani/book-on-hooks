@@ -19,14 +19,14 @@ func (app *Application) Routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/api/books", app.bookHandlers.GetBooks)
 	router.HandlerFunc(http.MethodPost, "/api/books", app.bookHandlers.CreateBook)
 	router.HandlerFunc(http.MethodGet, "/api/books/:id", app.bookHandlers.GetBook)
-	router.HandlerFunc(http.MethodGet, "/api/books/:id/locations", app.bookHandlers.GetBookLocations)
-	router.HandlerFunc(http.MethodGet, "/api/images/:image", app.bookHandlers.GetImage)
+	router.HandlerFunc(http.MethodGet, "/api/books/:id/summary", app.bookHandlers.GetBookSummary)
+	router.HandlerFunc(http.MethodGet, "/api/books/images/:image", app.bookHandlers.GetBookImage)
 	router.HandlerFunc(http.MethodPatch, "/api/books/:id", app.bookHandlers.UpdateBook)
+	router.HandlerFunc(http.MethodPatch, "/api/books/:id/image", app.bookHandlers.UpdateBookImage)
 	router.HandlerFunc(http.MethodDelete, "/api/books/:id", app.bookHandlers.DeleteBook)
 
 	// Machine routes
-	router.HandlerFunc(http.MethodGet, "/api/machines", app.machineHandlers.MachinesView)
-	router.HandlerFunc(http.MethodPost, "/api/machines", app.machineHandlers.MachineCreate)
+	router.HandlerFunc(http.MethodPost, "/api/machines", app.machineHandlers.CreateMachine)
 	router.HandlerFunc(http.MethodGet, "/api/machines/:id", app.machineHandlers.GetMachine)
 	router.HandlerFunc(http.MethodPatch, "/api/machines/:id", app.machineHandlers.UpdateMachine)
 	router.HandlerFunc(http.MethodDelete, "/api/machines/:id", app.machineHandlers.DeleteMachine)

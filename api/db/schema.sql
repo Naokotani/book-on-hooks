@@ -26,3 +26,20 @@ CREATE TABLE book_machine (
 
     PRIMARY KEY(machine_id, book_id)
 );
+
+-- BOOK_METRICS TABLE
+CREATE TABLE book_metrics (
+    id          BIGSERIAL PRIMARY KEY,
+    book_id     BIGINT NOT NULL REFERENCES book(id) ON DELETE CASCADE,
+    machine_id  BIGINT NOT NULL REFERENCES machine(id) ON DELETE CASCADE,
+    date        DATE NOT NULL DEFAULT CURRENT_DATE,
+    qr          BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- MACHINE_METRICS TABLE
+CREATE TABLE machine_metrics (
+    id          BIGSERIAL PRIMARY KEY,
+    machine_id  BIGINT NOT NULL REFERENCES machine(id) ON DELETE CASCADE,
+    date        DATE NOT NULL DEFAULT CURRENT_DATE,
+    qr          BOOLEAN NOT NULL DEFAULT FALSE
+);

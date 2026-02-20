@@ -96,7 +96,7 @@ func (db *Database) GetMachines(ctx context.Context) ([]domain.Machine, error) {
 func (db *Database) GetMachineById(ctx context.Context, id int64) (*domain.Machine, error) {
 	machine, err := db.Q.GetMachineById(ctx, id)
 	if err != nil {
-		return &domain.Machine{}, err
+		return nil, err
 	}
 
 	return mapMachine(machine), nil
@@ -116,7 +116,7 @@ func (db *Database) GetMachineWithBooks(ctx context.Context, id int64) (*domain.
 			ID:       rows[0].MachineID,
 			Location: rows[0].Location,
 			Rows:     int(rows[0].MachineRows),
-			Columns:  int(rows[0].MachineColumns),
+			Cols:     int(rows[0].MachineColumns),
 		},
 		Books: []domain.LoadedBook{},
 	}

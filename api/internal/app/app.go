@@ -3,7 +3,6 @@ package app
 import (
 	"net/http"
 
-	"booksonhooks.ca/internal/forms"
 	"booksonhooks.ca/internal/handlers/book"
 	"booksonhooks.ca/internal/handlers/machine"
 	"booksonhooks.ca/internal/logger"
@@ -24,8 +23,7 @@ func CreateApp(addr *string, logger *logger.Logger, db *repository.Database) htt
 		db:  db,
 	}
 
-	form := forms.New(db, logger)
-	app.bookHandlers = book.New(form, logger, db)
+	app.bookHandlers = book.New(logger, db)
 	app.machineHandlers = machine.New(logger, db)
 
 	return http.Server{

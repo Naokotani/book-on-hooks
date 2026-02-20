@@ -4,6 +4,7 @@ import (
 	"booksonhooks.ca/internal/logger"
 	"context"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,8 +19,11 @@ type mockBookRepo struct {
 	getBooksFn         func() ([]domain.Book, error)
 	getBookByIDFn      func(id int64) (*domain.Book, error)
 	getBookLocationsFn func(bookID int64) (*domain.BookLocation, error)
+	insertBookFn       func(book *domain.Book, file multipart.File, header *multipart.FileHeader) (int64, error)
 	updateBookFn       func(book *domain.Book) error
-	deleteBookFn       func(id int64) error
+	updateBookImageFn  func(id int64, file multipart.File, header *multipart.FileHeader) (string, error)
+	deleteBookFn       func(id int64) (string, error)
+	insertBookMetricFn func(bookID, machineID int64, qr bool) (int64, error)
 }
 
 func (m *mockBookRepo) GetBooks(ctx context.Context) ([]domain.Book, error) {
@@ -37,6 +41,13 @@ func (m *mockBookRepo) GetBookLocations(ctx context.Context, bookID int64) (*dom
 	return m.getBookLocationsFn(bookID)
 }
 
+func (m *mockBookRepo) InsertBook(ctx context.Context, book *domain.Book, file multipart.File, header *multipart.FileHeader) (int64, error) {
+	if m.insertBookFn == nil {
+		return 0, nil
+	}
+	return m.insertBookFn(book, file, header)
+}
+
 func (m *mockBookRepo) UpdateBook(ctx context.Context, book *domain.Book) error {
 	if m.updateBookFn == nil {
 		return nil
@@ -44,11 +55,25 @@ func (m *mockBookRepo) UpdateBook(ctx context.Context, book *domain.Book) error 
 	return m.updateBookFn(book)
 }
 
-func (m *mockBookRepo) DeleteBook(ctx context.Context, id int64) error {
+func (m *mockBookRepo) UpdateBookImage(ctx context.Context, id int64, file multipart.File, header *multipart.FileHeader) (string, error) {
+	if m.updateBookImageFn == nil {
+		return "", nil
+	}
+	return m.updateBookImageFn(id, file, header)
+}
+
+func (m *mockBookRepo) DeleteBook(ctx context.Context, id int64) (string, error) {
 	if m.deleteBookFn == nil {
-		return nil
+		return "", nil
 	}
 	return m.deleteBookFn(id)
+}
+
+func (m *mockBookRepo) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool) (int64, error) {
+	if m.insertBookMetricFn == nil {
+		return 0, nil
+	}
+	return m.insertBookMetricFn(bookID, machineID, qr)
 }
 
 // --- Tests ---
@@ -61,7 +86,7 @@ func TestGetBooksHandler(t *testing.T) {
 	}
 
 	logger := logger.NewLogger("info")
-	h := New(nil, &logger, mockRepo)
+	h := New(&logger, mockRepo)
 
 	req := httptest.NewRequest("GET", "/api/books", nil)
 	rr := httptest.NewRecorder()
@@ -82,7 +107,7 @@ func TestGetBookHandler(t *testing.T) {
 	}
 
 	logger := logger.NewLogger("info")
-	h := New(nil, &logger, mockRepo)
+	h := New(&logger, mockRepo)
 
 	req := httptest.NewRequest("GET", "/api/books/12", nil)
 	params := httprouter.Params{{Key: "id", Value: "12"}}
@@ -101,5 +126,49 @@ func TestGetBookHandler(t *testing.T) {
 	}
 	if resp.ID != 12 {
 		t.Fatalf("expected id=12, got %d", resp.ID)
+	}
+}
+
+func TestGetBookLocationsHandler_ValidQueryString(t *testing.T) {
+	mockRepo := &mockBookRepo{
+		getBookLocationsFn: func(bookID int64) (*domain.BookLocation, error) {
+			return &domain.BookLocation{BookID: bookID}, nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=true&machine=9", nil)
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.GetBookSummary(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+}
+
+func TestGetBookLocationsHandler_InvalidQueryString(t *testing.T) {
+	mockRepo := &mockBookRepo{
+		getBookLocationsFn: func(bookID int64) (*domain.BookLocation, error) {
+			return &domain.BookLocation{BookID: bookID}, nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=nope&machine=9", nil)
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.GetBookSummary(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rr.Code)
 	}
 }

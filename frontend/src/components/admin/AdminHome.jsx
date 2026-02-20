@@ -64,7 +64,7 @@ export default function AdminHome() {
         {machines.map((machine) => (
           <li key={machine.id ?? machine.location}>
             <Link to={`/admin/machine/load/${machine.id}`}>
-              {machine.location} ({machine.rows}x{machine.columns})
+              {machine.location} ({machine.rows}x{machine.cols})
             </Link>
           </li>
         ))}

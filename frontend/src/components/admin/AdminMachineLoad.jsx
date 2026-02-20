@@ -102,7 +102,7 @@ export default function AdminMachineLoad() {
 
     try {
       const rowCount = Number(machineData?.machine?.rows) || 0;
-      const colCount = Number(machineData?.machine?.columns) || 0;
+      const colCount = Number(machineData?.machine?.cols) || 0;
 
       const payloadBooks = [];
       for (let row = 0; row < rowCount; row++) {
@@ -152,7 +152,7 @@ export default function AdminMachineLoad() {
 
   const machine = machineData?.machine;
   const rowCount = Number(machine?.rows) || 0;
-  const colCount = Number(machine?.columns) || 0;
+  const colCount = Number(machine?.cols) || 0;
 
   return (
     <section className="admin-panel">
@@ -162,7 +162,7 @@ export default function AdminMachineLoad() {
       ) : (
         <>
           <p>
-            {machine.location} ({machine.rows}x{machine.columns})
+            {machine.location} ({machine.rows}x{machine.cols})
           </p>
 
           {rowCount <= 0 || colCount <= 0 ? (

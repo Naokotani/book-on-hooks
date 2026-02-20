@@ -27,7 +27,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/about" element={<About />} />
           <Route path="/books" element={<Books />} />
-          <Route path="/books/:id/locations" element={<BookLocation />} />
+          <Route path="/books/:id/summary" element={<BookLocation />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/location" element={<Location />} />
           <Route path="/location/:id" element={<LocationMachineView />} />

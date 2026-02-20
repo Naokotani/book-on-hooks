@@ -37,7 +37,7 @@ func mapMachines(machines []sqlc.Machine) []domain.Machine {
 		out[i] = domain.Machine{
 			ID:       m.ID,
 			Location: m.Location,
-			Columns:  int(m.Columns),
+			Cols:     int(m.Columns),
 			Rows:     int(m.Rows),
 		}
 	}
@@ -48,7 +48,7 @@ func mapMachine(machine sqlc.Machine) *domain.Machine {
 	return &domain.Machine{
 		ID:       machine.ID,
 		Location: machine.Location,
-		Columns:  int(machine.Columns),
+		Cols:     int(machine.Columns),
 		Rows:     int(machine.Rows),
 	}
 }

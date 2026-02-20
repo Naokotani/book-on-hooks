@@ -4,6 +4,10 @@
 
 package sqlc
 
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
 type Book struct {
 	ID      int64
 	Title   string
@@ -20,9 +24,24 @@ type BookMachine struct {
 	Col       int32
 }
 
+type BookMetric struct {
+	ID        int64
+	BookID    int64
+	MachineID int64
+	Date      pgtype.Date
+	Qr        bool
+}
+
 type Machine struct {
 	ID       int64
 	Location string
 	Rows     int32
 	Columns  int32
+}
+
+type MachineMetric struct {
+	ID        int64
+	MachineID int64
+	Date      pgtype.Date
+	Qr        bool
 }

@@ -7,6 +7,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const deleteBook = `-- name: DeleteBook :exec
@@ -124,6 +126,37 @@ func (q *Queries) InsertBook(ctx context.Context, arg InsertBookParams) (int64, 
 		arg.Summary,
 		arg.Image,
 		arg.Price,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertBookMetric = `-- name: InsertBookMetric :one
+INSERT INTO book_metrics (
+    book_id,
+    machine_id,
+    date,
+    qr
+) VALUES (
+    $1, $2, $3, $4
+)
+RETURNING id
+`
+
+type InsertBookMetricParams struct {
+	BookID    int64
+	MachineID int64
+	Date      pgtype.Date
+	Qr        bool
+}
+
+func (q *Queries) InsertBookMetric(ctx context.Context, arg InsertBookMetricParams) (int64, error) {
+	row := q.db.QueryRow(ctx, insertBookMetric,
+		arg.BookID,
+		arg.MachineID,
+		arg.Date,
+		arg.Qr,
 	)
 	var id int64
 	err := row.Scan(&id)

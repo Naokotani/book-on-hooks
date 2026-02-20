@@ -72,7 +72,7 @@ export default function LocationMachineView() {
   }
 
   const rowCount = Number(machine.rows) || 0;
-  const colCount = Number(machine.columns) || 0;
+  const colCount = Number(machine.cols) || 0;
 
   const bySlot = new Map();
   for (const loadedBook of books) {
@@ -104,13 +104,13 @@ export default function LocationMachineView() {
                   ) : (
                     <Link
                       className="machine-book-cover-link"
-                      to={`/books/${loadedBook.id}/locations`}
+                      to={`/books/${loadedBook.id}/summary`}
                     >
                       <div className="machine-book-cover-wrap">
                         {loadedBook.image ? (
                           <img
                             className="machine-book-cover"
-                            src={`/api/images/${loadedBook.image}`}
+                            src={`/api/books/images/${loadedBook.image}`}
                             alt={`${loadedBook.title} cover`}
                             loading="lazy"
                           />

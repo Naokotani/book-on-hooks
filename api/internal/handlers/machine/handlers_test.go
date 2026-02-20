@@ -68,45 +68,16 @@ func (m *mockMachineRepo) ClearMachineBooks(ctx context.Context, machineID int64
 	return m.clearMachineBooksFn(machineID)
 }
 
-func TestMachinesViewHandler(t *testing.T) {
-	mockRepo := &mockMachineRepo{
-		getMachinesFn: func() ([]domain.Machine, error) {
-			return []domain.Machine{{Location: "A1", Rows: 6, Columns: 5}}, nil
-		},
-		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
-			return &domain.Machine{ID: id, Location: "A1", Rows: 6, Columns: 5}, nil
-		},
-		insertMachineFn: func(machine *domain.Machine) (int64, error) {
-			return 1, nil
-		},
-		loadMachineFn: func(machineID int64, books []domain.BookMachine) error {
-			return nil
-		},
-	}
-
-	logger := logger.NewLogger("info")
-	h := New(&logger, mockRepo)
-
-	req := httptest.NewRequest("GET", "/api/machines", nil)
-	rr := httptest.NewRecorder()
-
-	h.MachinesView(rr, req)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("expected 200, got %d", rr.Code)
-	}
-}
-
 func TestMachineCreateHandler(t *testing.T) {
 	mockRepo := &mockMachineRepo{
 		getMachinesFn: func() ([]domain.Machine, error) {
 			return []domain.Machine{}, nil
 		},
 		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
-			return &domain.Machine{ID: id, Rows: 6, Columns: 5}, nil
+			return &domain.Machine{ID: id, Rows: 6, Cols: 5}, nil
 		},
 		insertMachineFn: func(machine *domain.Machine) (int64, error) {
-			if machine.Location != "HQ" || machine.Rows != 3 || machine.Columns != 4 {
+			if machine.Location != "HQ" || machine.Rows != 3 || machine.Cols != 4 {
 				t.Fatalf("unexpected machine payload: %+v", machine)
 			}
 			return 42, nil
@@ -123,7 +94,7 @@ func TestMachineCreateHandler(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/machines", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 
-	h.MachineCreate(rr, req)
+	h.CreateMachine(rr, req)
 
 	if rr.Code != http.StatusCreated {
 		t.Errorf("expected 201, got %d", rr.Code)
@@ -136,7 +107,7 @@ func TestLoadMachineHandler(t *testing.T) {
 			return []domain.Machine{}, nil
 		},
 		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
-			return &domain.Machine{ID: id, Rows: 6, Columns: 5}, nil
+			return &domain.Machine{ID: id, Rows: 6, Cols: 5}, nil
 		},
 		insertMachineFn: func(machine *domain.Machine) (int64, error) {
 			return 1, nil
@@ -192,7 +163,7 @@ func TestLoadMachineHandler_RejectsDuplicateBookID(t *testing.T) {
 			return []domain.Machine{}, nil
 		},
 		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
-			return &domain.Machine{ID: id, Rows: 6, Columns: 5}, nil
+			return &domain.Machine{ID: id, Rows: 6, Cols: 5}, nil
 		},
 		insertMachineFn: func(machine *domain.Machine) (int64, error) {
 			return 1, nil
@@ -239,7 +210,7 @@ func TestMachineCreateHandler_RejectsInvalidDimensions(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/machines", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 
-	h.MachineCreate(rr, req)
+	h.CreateMachine(rr, req)
 
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected 422, got %d", rr.Code)
@@ -250,7 +221,7 @@ func TestLoadMachineHandler_RejectsOutOfBoundsSlot(t *testing.T) {
 	mockRepo := &mockMachineRepo{
 		getMachinesFn: func() ([]domain.Machine, error) { return []domain.Machine{}, nil },
 		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
-			return &domain.Machine{ID: id, Rows: 2, Columns: 2}, nil
+			return &domain.Machine{ID: id, Rows: 2, Cols: 2}, nil
 		},
 		insertMachineFn: func(machine *domain.Machine) (int64, error) { return 1, nil },
 		loadMachineFn: func(machineID int64, books []domain.BookMachine) error {

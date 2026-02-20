@@ -3,11 +3,13 @@ package machine
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/jackc/pgx/v5"
 
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/httpErrors"
@@ -31,10 +33,6 @@ type MachineHandler struct {
 	repo MachineRepo
 }
 
-type MachineRow struct {
-	books []domain.Book
-}
-
 func New(log *logger.Logger,
 	repo MachineRepo) *MachineHandler {
 
@@ -44,24 +42,8 @@ func New(log *logger.Logger,
 	}
 }
 
-func (h *MachineHandler) MachinesView(w http.ResponseWriter, r *http.Request) {
-	machines, err := h.repo.GetMachines(r.Context())
-
-	if err != nil {
-		h.log.Error("Failed to read machines. %s", err)
-		httpErrors.NotFound(w)
-		return
-	}
-
-	h.writeJSON(w, http.StatusOK, machines)
-}
-
-func (h *MachineHandler) MachineCreate(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		Location string `json:"location"`
-		Rows     int    `json:"rows"`
-		Cols     int    `json:"cols"`
-	}
+func (h *MachineHandler) CreateMachine(w http.ResponseWriter, r *http.Request) {
+	var payload domain.MachineRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		h.log.Error("failed to decode machine json: %v", err)
@@ -79,11 +61,7 @@ func (h *MachineHandler) MachineCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	machine := &domain.Machine{
-		Location: payload.Location,
-		Rows:     payload.Rows,
-		Columns:  payload.Cols,
-	}
+	machine := mapMachineRequestToMachine(payload)
 
 	id, err := h.repo.InsertMachine(r.Context(), machine)
 	if err != nil {
@@ -92,9 +70,8 @@ func (h *MachineHandler) MachineCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, http.StatusCreated, struct {
-		ID int64 `json:"id"`
-	}{ID: id})
+	machine.ID = id
+	h.writeJSON(w, http.StatusCreated, machine)
 }
 
 func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
@@ -107,17 +84,16 @@ func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 
 	machine, err := h.repo.GetMachineById(r.Context(), int64(id))
 	if err != nil {
-		httpErrors.NotFound(w)
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to get machine: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
 
-	var payload struct {
-		Books []struct {
-			BookID int64 `json:"book_id"`
-			Row    int   `json:"row"`
-			Col    int   `json:"col"`
-		} `json:"books"`
-	}
+	var payload domain.MachineLoadRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		h.log.Error("failed to decode load machine json: %v", err)
@@ -125,38 +101,10 @@ func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	seenBookIDs := make(map[int64]struct{}, len(payload.Books))
-	seenSlots := make(map[string]struct{}, len(payload.Books))
-
-	books := make([]domain.BookMachine, len(payload.Books))
-	for i, b := range payload.Books {
-		if b.BookID <= 0 || b.Row < 0 || b.Col < 0 {
-			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
-			return
-		}
-		if b.Row >= machine.Rows || b.Col >= machine.Columns {
-			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
-			return
-		}
-		if _, exists := seenBookIDs[b.BookID]; exists {
-			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
-			return
-		}
-		seenBookIDs[b.BookID] = struct{}{}
-
-		slotKey := strconv.Itoa(b.Row) + ":" + strconv.Itoa(b.Col)
-		if _, exists := seenSlots[slotKey]; exists {
-			httpErrors.ClientError(w, http.StatusUnprocessableEntity)
-			return
-		}
-		seenSlots[slotKey] = struct{}{}
-
-		books[i] = domain.BookMachine{
-			MachineID: int64(id),
-			BookID:    b.BookID,
-			Row:       b.Row,
-			Col:       b.Col,
-		}
+	books, httpErr := validateAndMapLoadBooks(int64(id), machine, payload.Books)
+	if httpErr != nil {
+		httpErrors.ClientError(w, httpErr.Status)
+		return
 	}
 
 	if err := h.repo.LoadMachine(r.Context(), int64(id), books); err != nil {
@@ -165,43 +113,10 @@ func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, http.StatusOK, struct {
-		MachineID int64 `json:"machine_id"`
-		Count     int   `json:"count"`
-	}{
+	h.writeJSON(w, http.StatusOK, domain.MachineLoadResponse{
 		MachineID: int64(id),
 		Count:     len(books),
 	})
-}
-
-func (h *MachineHandler) MachineLoadView(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil {
-		httpErrors.ServerError(w, http.StatusInternalServerError)
-		return
-	}
-
-	machine, err := h.repo.GetMachineById(r.Context(), int64(id))
-	if err != nil {
-		httpErrors.NotFound(w)
-		return
-	}
-
-	response := struct {
-		ID       int64  `json:"id"`
-		Location string `json:"location"`
-		Rows     int    `json:"rows"`
-		Cols     int    `json:"cols"`
-	}{
-		ID:       machine.ID,
-		Location: machine.Location,
-		Rows:     machine.Rows,
-		Cols:     machine.Columns,
-	}
-
-	h.writeJSON(w, http.StatusOK, response)
 }
 
 func (h *MachineHandler) GetMachine(w http.ResponseWriter, r *http.Request) {
@@ -215,38 +130,28 @@ func (h *MachineHandler) GetMachine(w http.ResponseWriter, r *http.Request) {
 
 	machine, err := h.repo.GetMachineById(r.Context(), int64(id))
 	if err != nil {
-		httpErrors.NotFound(w)
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to get machine: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
 
-	response := struct {
-		ID       int64  `json:"id"`
-		Location string `json:"location"`
-		Rows     int    `json:"rows"`
-		Cols     int    `json:"cols"`
-	}{
-		ID:       machine.ID,
-		Location: machine.Location,
-		Rows:     machine.Rows,
-		Cols:     machine.Columns,
-	}
-
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, http.StatusOK, machine)
 }
 
 func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 	id, err := strconv.Atoi(params.ByName("id"))
+
 	if err != nil || id <= 0 {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	var payload struct {
-		Location string `json:"location"`
-		Rows     int    `json:"rows"`
-		Cols     int    `json:"cols"`
-	}
+	var payload domain.MachineUpsert
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		httpErrors.ClientError(w, http.StatusBadRequest)
 		return
@@ -262,31 +167,19 @@ func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	machine := &domain.Machine{
-		ID:       int64(id),
-		Location: payload.Location,
-		Rows:     payload.Rows,
-		Columns:  payload.Cols,
-	}
+	machine := mapMachineUpsertToMachine(int64(id), payload)
 
 	if err := h.repo.UpdateMachine(r.Context(), machine); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to update machine: %v", err)
 		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
 
-	response := struct {
-		ID       int64  `json:"id"`
-		Location string `json:"location"`
-		Rows     int    `json:"rows"`
-		Cols     int    `json:"cols"`
-	}{
-		ID:       machine.ID,
-		Location: machine.Location,
-		Rows:     machine.Rows,
-		Cols:     machine.Columns,
-	}
-
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, http.StatusOK, machine)
 }
 
 func (h *MachineHandler) DeleteMachine(w http.ResponseWriter, r *http.Request) {
@@ -297,7 +190,22 @@ func (h *MachineHandler) DeleteMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := h.repo.GetMachineById(r.Context(), int64(id)); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to get machine before delete: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
 	if err := h.repo.DeleteMachine(r.Context(), int64(id)); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to delete machine: %v", err)
 		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
@@ -333,17 +241,14 @@ func (h *MachineHandler) GetMachineWithBooks(w http.ResponseWriter, r *http.Requ
 
 	result, err := h.repo.GetMachineWithBooks(r.Context(), int64(id))
 	if err != nil {
-		httpErrors.NotFound(w)
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to get machine with books: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
 
-	response := struct {
-		Machine domain.Machine      `json:"machine"`
-		Books   []domain.LoadedBook `json:"books"`
-	}{
-		Machine: result.Machine,
-		Books:   result.Books,
-	}
-
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, http.StatusOK, result)
 }

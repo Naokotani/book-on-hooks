@@ -8,9 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/sqlc"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const defaultImageDir = "/data/images"
@@ -47,22 +49,9 @@ func (db *Database) InsertBook(ctx context.Context,
 		return 0, fmt.Errorf("failed to insert book\n%s", err)
 	}
 
-	filename := strconv.FormatInt(id, 10) + "_" + header.Filename
-	coversDir := filepath.Join(imageDir(), "covers")
-
-	if err := os.MkdirAll(coversDir, 0o755); err != nil {
-		return 0, fmt.Errorf("failed to create images directory\n%s", err)
-	}
-
-	dst, err := os.Create(filepath.Join(coversDir, filename))
+	filename, err := storeBookImage(id, file, header)
 	if err != nil {
-		return 0, fmt.Errorf("failed to create image file\n%s", err)
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, file)
-	if err != nil {
-		return 0, fmt.Errorf("failed to copy file to image directory\n%s", err)
+		return 0, err
 	}
 
 	err = qtx.UpdateBookImage(ctx, sqlc.UpdateBookImageParams{
@@ -80,17 +69,60 @@ func (db *Database) InsertBook(ctx context.Context,
 	return id, nil
 }
 
+func storeBookImage(bookID int64, file multipart.File, header *multipart.FileHeader) (string, error) {
+	if file == nil || header == nil {
+		return "", fmt.Errorf("missing image file")
+	}
+
+	filename := strconv.FormatInt(bookID, 10) + "_" + header.Filename
+	coversDir := filepath.Join(imageDir(), "covers")
+
+	if err := os.MkdirAll(coversDir, 0o755); err != nil {
+		return "", fmt.Errorf("failed to create images directory\n%s", err)
+	}
+
+	dst, err := os.Create(filepath.Join(coversDir, filename))
+	if err != nil {
+		return "", fmt.Errorf("failed to create image file\n%s", err)
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, file)
+	if err != nil {
+		return "", fmt.Errorf("failed to copy file to image directory\n%s", err)
+	}
+
+	return filename, nil
+}
+
 func (db *Database) InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error) {
 	id, err := db.Q.InsertMachine(ctx, sqlc.InsertMachineParams{
 		Location: machine.Location,
 		Rows:     int32(machine.Rows),
-		Columns:  int32(machine.Columns),
+		Columns:  int32(machine.Cols),
 	})
 	if err != nil {
 		return 0, err
 	}
 
 	return id, nil
+}
+
+func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool) (int64, error) {
+	metricID, err := db.Q.InsertBookMetric(ctx, sqlc.InsertBookMetricParams{
+		BookID:    bookID,
+		MachineID: machineID,
+		Date: pgtype.Date{
+			Time:  time.Now().UTC(),
+			Valid: true,
+		},
+		Qr: qr,
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return metricID, nil
 }
 
 func (db *Database) LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error {
