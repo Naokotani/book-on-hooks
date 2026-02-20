@@ -97,3 +97,32 @@ To remove all volumes (including images and DB data):
 ```bash
 podman compose down -v
 ```
+
+## QR Metrics Flow
+
+Book click metrics are written when the summary endpoint is called with `machine` (and optional metadata):
+
+- `machine`: machine id
+- `source`: click source, currently `location-grid`
+- `is_qr`: whether the user arrived from a QR URL
+
+Machine page entry supports QR tracking with a URL like:
+
+```text
+/location/1?is_qr=true
+```
+
+Flow:
+
+1. `LocationMachineView` reads `is_qr` from the page URL and stores it in `sessionStorage`.
+2. Cover links from the machine grid to summary pages include:
+   - `machine=<machine id>`
+   - `source=location-grid`
+   - `is_qr=<true|false>` (from session state)
+3. `BookLocation` forwards query params to `/api/books/:id/summary`.
+4. API inserts the metric row using those values.
+
+Notes:
+
+- The `is_qr` value is session-scoped (tab/session lifetime), so it persists across back/forward and multiple summary clicks during the session.
+- This QR behavior is only applied for machine-grid sourced clicks (`source=location-grid`).

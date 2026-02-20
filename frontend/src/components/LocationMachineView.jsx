@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { getSessionQr, persistQrFromSearch } from "../lib/metricsSession";
 
 function keyFor(row, col) {
   return `${row}-${col}`;
@@ -14,6 +15,7 @@ export default function LocationMachineView() {
 
   useEffect(() => {
     let cancelled = false;
+    persistQrFromSearch(location.search);
 
     async function loadMachine() {
       try {
@@ -50,7 +52,7 @@ export default function LocationMachineView() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, location.search]);
 
   if (loading) {
     return <h1>location details...</h1>;
@@ -101,6 +103,7 @@ export default function LocationMachineView() {
               const params = new URLSearchParams(location.search);
               params.set("machine", String(machine.id));
               params.set("source", "location-grid");
+              params.set("is_qr", getSessionQr() ? "true" : "false");
 
               return (
                 <article key={keyFor(row, col)} className="machine-slot-card">
