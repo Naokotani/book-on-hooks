@@ -23,7 +23,7 @@ type mockBookRepo struct {
 	updateBookFn       func(book *domain.Book) error
 	updateBookImageFn  func(id int64, file multipart.File, header *multipart.FileHeader) (string, error)
 	deleteBookFn       func(id int64) (string, error)
-	insertBookMetricFn func(bookID, machineID int64, qr bool) (int64, error)
+	insertBookMetricFn func(bookID, machineID int64, qr bool, source string) (int64, error)
 }
 
 func (m *mockBookRepo) GetBooks(ctx context.Context) ([]domain.Book, error) {
@@ -69,11 +69,11 @@ func (m *mockBookRepo) DeleteBook(ctx context.Context, id int64) (string, error)
 	return m.deleteBookFn(id)
 }
 
-func (m *mockBookRepo) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool) (int64, error) {
+func (m *mockBookRepo) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool, source string) (int64, error) {
 	if m.insertBookMetricFn == nil {
 		return 0, nil
 	}
-	return m.insertBookMetricFn(bookID, machineID, qr)
+	return m.insertBookMetricFn(bookID, machineID, qr, source)
 }
 
 // --- Tests ---
@@ -131,6 +131,12 @@ func TestGetBookHandler(t *testing.T) {
 
 func TestGetBookLocationsHandler_ValidQueryString(t *testing.T) {
 	mockRepo := &mockBookRepo{
+		insertBookMetricFn: func(bookID, machineID int64, qr bool, source string) (int64, error) {
+			if bookID != 7 || machineID != 9 || !qr || source != "location-grid" {
+				t.Fatalf("unexpected metric payload bookID=%d machineID=%d qr=%t source=%q", bookID, machineID, qr, source)
+			}
+			return 1, nil
+		},
 		getBookLocationsFn: func(bookID int64) (*domain.BookLocation, error) {
 			return &domain.BookLocation{BookID: bookID}, nil
 		},
@@ -139,7 +145,7 @@ func TestGetBookLocationsHandler_ValidQueryString(t *testing.T) {
 	logger := logger.NewLogger("info")
 	h := New(&logger, mockRepo)
 
-	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=true&machine=9", nil)
+	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=true&machine=9&source=location-grid", nil)
 	params := httprouter.Params{{Key: "id", Value: "7"}}
 	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()
@@ -162,6 +168,28 @@ func TestGetBookLocationsHandler_InvalidQueryString(t *testing.T) {
 	h := New(&logger, mockRepo)
 
 	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=nope&machine=9", nil)
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.GetBookSummary(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rr.Code)
+	}
+}
+
+func TestGetBookLocationsHandler_InvalidSource(t *testing.T) {
+	mockRepo := &mockBookRepo{
+		getBookLocationsFn: func(bookID int64) (*domain.BookLocation, error) {
+			return &domain.BookLocation{BookID: bookID}, nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=true&machine=9&source=bad/source", nil)
 	params := httprouter.Params{{Key: "id", Value: "7"}}
 	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()

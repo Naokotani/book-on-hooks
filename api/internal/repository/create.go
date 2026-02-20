@@ -108,7 +108,9 @@ func (db *Database) InsertMachine(ctx context.Context, machine *domain.Machine) 
 	return id, nil
 }
 
-func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool) (int64, error) {
+func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool, source string) (int64, error) {
+	sourceText := pgtype.Text{String: source, Valid: source != ""}
+
 	metricID, err := db.Q.InsertBookMetric(ctx, sqlc.InsertBookMetricParams{
 		BookID:    bookID,
 		MachineID: machineID,
@@ -116,7 +118,8 @@ func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int6
 			Time:  time.Now().UTC(),
 			Valid: true,
 		},
-		Qr: qr,
+		Qr:     qr,
+		Source: sourceText,
 	})
 	if err != nil {
 		return 0, err
