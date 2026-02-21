@@ -106,7 +106,7 @@ Backend package overview (`api/internal`):
 - `domain`: shared domain models and request/response DTO structs.
 - `handlers/book`: HTTP handlers for book endpoints and book metric recording.
 - `handlers/machine`: HTTP handlers for machine endpoints and machine metric recording.
-- `repository`: database-facing persistence and transactional operations.
+- `repository`: database-facing persistence, transactional operations, and file-system interactions for image storage lifecycle.
 - `requestx`: shared request parsing and normalization helpers.
 - `validator`: reusable field-level validation helpers.
 - `httpErrors`: common HTTP error response helpers (including structured validation errors).
