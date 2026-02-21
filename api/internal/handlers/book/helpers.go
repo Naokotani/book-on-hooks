@@ -2,6 +2,7 @@ package book
 
 import (
 	"booksonhooks.ca/internal/domain"
+	"booksonhooks.ca/internal/requestx"
 	"booksonhooks.ca/internal/validator"
 	"encoding/json"
 	"mime/multipart"
@@ -89,5 +90,50 @@ func mapBookCreateRequestToBook(req bookCreateRequest) *domain.Book {
 		Author:  req.Author,
 		Summary: req.Summary,
 		Price:   req.Price,
+	}
+}
+
+func (h *BookHandler) recordBookMetric(r *http.Request, bookID int64) {
+	var (
+		isQr      bool
+		machineID int64
+		source    string
+		hasErrors bool
+	)
+
+	parsedQr, err := requestx.ParseOptionalBool(r.URL.Query().Get("is_qr"))
+	if err != nil {
+		h.log.Warn("skipping book metric: invalid is_qr book_id=%d raw=%q err=%v",
+			bookID, r.URL.Query().Get("is_qr"), err)
+		hasErrors = true
+	} else {
+		isQr = parsedQr
+	}
+
+	parsedMachineID, err := requestx.ParseOptionalInt64(r.URL.Query().Get("machine"))
+	if err != nil {
+		h.log.Warn("skipping book metric: invalid machine book_id=%d raw=%q err=%v",
+			bookID, r.URL.Query().Get("machine"), err)
+		hasErrors = true
+	} else {
+		machineID = parsedMachineID
+	}
+
+	parsedSource, err := requestx.ParseOptionalSource(r.URL.Query().Get("source"))
+	if err != nil {
+		h.log.Warn("skipping book metric: invalid source book_id=%d raw=%q err=%v",
+			bookID, r.URL.Query().Get("source"), err)
+		hasErrors = true
+	} else {
+		source = parsedSource
+	}
+
+	if hasErrors || machineID <= 0 {
+		return
+	}
+
+	if _, err := h.repo.InsertBookMetric(r.Context(), bookID, machineID, isQr, source); err != nil {
+		h.log.Error("failed to insert book metric: book_id=%d machine_id=%d is_qr=%t source=%q err=%v",
+			bookID, machineID, isQr, source, err)
 	}
 }

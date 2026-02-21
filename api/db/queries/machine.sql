@@ -29,3 +29,15 @@ WHERE id = $1;
 -- name: DeleteMachine :exec
 DELETE FROM machine
 WHERE id = $1;
+
+-- name: InsertMachineMetric :one
+INSERT INTO machine_metrics (
+    machine_id,
+    date,
+    qr,
+    source,
+    admin
+) VALUES (
+    $1, NOW()::date, $2, $3, $4
+)
+RETURNING id;

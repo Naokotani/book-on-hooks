@@ -89,34 +89,6 @@ func (h *BookHandler) GetBookSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isQr, err := parseOptionalBool(r.URL.Query().Get("is_qr"))
-
-	if err != nil {
-		httpErrors.ClientError(w, http.StatusBadRequest)
-		return
-	}
-
-	machineID, err := parseOptionalInt64(r.URL.Query().Get("machine"))
-
-	if err != nil {
-		httpErrors.ClientError(w, http.StatusBadRequest)
-		return
-	}
-
-	source, err := parseOptionalSource(r.URL.Query().Get("source"))
-	if err != nil {
-		httpErrors.ClientError(w, http.StatusBadRequest)
-		return
-	}
-
-	if machineID > 0 {
-		if _, err := h.repo.InsertBookMetric(r.Context(), int64(id), machineID, isQr, source); err != nil {
-			h.log.Error("failed to insert book metric: book_id=%d machine_id=%d is_qr=%t source=%q err=%v", id, machineID, isQr, source, err)
-			httpErrors.ServerError(w, http.StatusInternalServerError)
-			return
-		}
-	}
-
 	bookLocation, err := h.repo.GetBookLocations(r.Context(), int64(id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -127,6 +99,8 @@ func (h *BookHandler) GetBookSummary(w http.ResponseWriter, r *http.Request) {
 		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
+
+	h.recordBookMetric(r, int64(id))
 
 	h.writeJSON(w, http.StatusOK, bookLocation)
 }
@@ -345,39 +319,4 @@ func imageDir() string {
 		return dir
 	}
 	return defaultImageDir
-}
-
-func parseOptionalBool(v string) (bool, error) {
-	if v == "" {
-		return false, nil
-	}
-	return strconv.ParseBool(v)
-}
-
-func parseOptionalInt64(v string) (int64, error) {
-	if v == "" {
-		return 0, nil
-	}
-	n, err := strconv.ParseInt(v, 10, 64)
-	if err != nil || n <= 0 {
-		return 0, errors.New("invalid int64")
-	}
-	return n, nil
-}
-
-func parseOptionalSource(v string) (string, error) {
-	s := strings.ToLower(strings.TrimSpace(v))
-	if s == "" {
-		return "", nil
-	}
-	if len(s) > 64 {
-		return "", errors.New("source too long")
-	}
-	for _, ch := range s {
-		if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-' {
-			continue
-		}
-		return "", errors.New("invalid source")
-	}
-	return s, nil
 }

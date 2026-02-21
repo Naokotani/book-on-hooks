@@ -3,9 +3,11 @@ package machine
 import (
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/httpErrors"
+	"booksonhooks.ca/internal/requestx"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 func (h *MachineHandler) writeJSON(w http.ResponseWriter, status int, data any) {
@@ -75,4 +77,45 @@ func validateAndMapLoadBooks(machineID int64, machine *domain.Machine, payloadBo
 	}
 
 	return books, nil
+}
+
+func isAdminSource(source string) bool {
+	return strings.HasPrefix(source, "admin-")
+}
+
+func (h *MachineHandler) recordMachineMetric(r *http.Request, machineID int64) {
+	var (
+		isQr      bool
+		source    string
+		hasErrors bool
+	)
+
+	parsedQr, err := requestx.ParseOptionalBool(r.URL.Query().Get("is_qr"))
+	if err != nil {
+		h.log.Warn("skipping machine metric: invalid is_qr machine_id=%d raw=%q err=%v",
+			machineID, r.URL.Query().Get("is_qr"), err)
+		hasErrors = true
+	} else {
+		isQr = parsedQr
+	}
+
+	parsedSource, err := requestx.ParseOptionalSource(r.URL.Query().Get("source"))
+	if err != nil {
+		h.log.Warn("skipping machine metric: invalid source machine_id=%d raw=%q err=%v",
+			machineID, r.URL.Query().Get("source"), err)
+		hasErrors = true
+	} else {
+		source = parsedSource
+	}
+
+	if hasErrors {
+		return
+	}
+
+	admin := isAdminSource(source)
+
+	if _, err := h.repo.InsertMachineMetric(r.Context(), machineID, isQr, source, admin); err != nil {
+		h.log.Error("failed to insert machine metric: machine_id=%d is_qr=%t source=%q admin=%t err=%v",
+			machineID, isQr, source, admin, err)
+	}
 }

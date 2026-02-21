@@ -45,4 +45,6 @@ type MachineMetric struct {
 	MachineID int64
 	Date      pgtype.Date
 	Qr        bool
+	Source    string
+	Admin     bool
 }

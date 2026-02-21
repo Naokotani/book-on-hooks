@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,6 +19,7 @@ type mockMachineRepo struct {
 	getMachineByIDFn      func(id int64) (*domain.Machine, error)
 	getMachineWithBooksFn func(id int64) (*domain.MachineWithBooks, error)
 	insertMachineFn       func(machine *domain.Machine) (int64, error)
+	insertMachineMetricFn func(machineID int64, qr bool, source string, admin bool) (int64, error)
 	loadMachineFn         func(machineID int64, books []domain.BookMachine) error
 	updateMachineFn       func(machine *domain.Machine) error
 	deleteMachineFn       func(id int64) error
@@ -41,6 +43,13 @@ func (m *mockMachineRepo) GetMachineWithBooks(ctx context.Context, id int64) (*d
 
 func (m *mockMachineRepo) InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error) {
 	return m.insertMachineFn(machine)
+}
+
+func (m *mockMachineRepo) InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool) (int64, error) {
+	if m.insertMachineMetricFn == nil {
+		return 0, nil
+	}
+	return m.insertMachineMetricFn(machineID, qr, source, admin)
 }
 
 func (m *mockMachineRepo) LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error {
@@ -243,5 +252,93 @@ func TestLoadMachineHandler_RejectsOutOfBoundsSlot(t *testing.T) {
 
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected 422, got %d", rr.Code)
+	}
+}
+
+func TestGetMachineWithBooks_RecordsMetric(t *testing.T) {
+	mockRepo := &mockMachineRepo{
+		getMachineWithBooksFn: func(id int64) (*domain.MachineWithBooks, error) {
+			return &domain.MachineWithBooks{
+				Machine: domain.Machine{ID: id, Location: "A1", Rows: 2, Cols: 2},
+				Books:   []domain.LoadedBook{},
+			}, nil
+		},
+		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool) (int64, error) {
+			if machineID != 7 || !qr || source != "admin-load" || !admin {
+				t.Fatalf("unexpected metric payload machineID=%d qr=%t source=%q admin=%t", machineID, qr, source, admin)
+			}
+			return 1, nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	req := httptest.NewRequest("GET", "/api/machines/7/books?is_qr=true&source=admin-load", nil)
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.GetMachineWithBooks(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+}
+
+func TestGetMachineWithBooks_InvalidSource(t *testing.T) {
+	mockRepo := &mockMachineRepo{
+		getMachineWithBooksFn: func(id int64) (*domain.MachineWithBooks, error) {
+			return &domain.MachineWithBooks{
+				Machine: domain.Machine{ID: id, Location: "A1", Rows: 2, Cols: 2},
+				Books:   []domain.LoadedBook{},
+			}, nil
+		},
+		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool) (int64, error) {
+			t.Fatal("InsertMachineMetric should not be called for invalid source")
+			return 0, nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	req := httptest.NewRequest("GET", "/api/machines/7/books?source=bad/source", nil)
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.GetMachineWithBooks(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+}
+
+func TestGetMachineWithBooks_MetricInsertErrorDoesNotFailRequest(t *testing.T) {
+	mockRepo := &mockMachineRepo{
+		getMachineWithBooksFn: func(id int64) (*domain.MachineWithBooks, error) {
+			return &domain.MachineWithBooks{
+				Machine: domain.Machine{ID: id, Location: "A1", Rows: 2, Cols: 2},
+				Books:   []domain.LoadedBook{},
+			}, nil
+		},
+		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool) (int64, error) {
+			return 0, errors.New("insert failed")
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	req := httptest.NewRequest("GET", "/api/machines/7/books?is_qr=true&source=location-grid", nil)
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.GetMachineWithBooks(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
 	}
 }

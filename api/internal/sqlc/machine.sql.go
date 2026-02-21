@@ -61,6 +61,38 @@ func (q *Queries) InsertMachine(ctx context.Context, arg InsertMachineParams) (i
 	return id, err
 }
 
+const insertMachineMetric = `-- name: InsertMachineMetric :one
+INSERT INTO machine_metrics (
+    machine_id,
+    date,
+    qr,
+    source,
+    admin
+) VALUES (
+    $1, NOW()::date, $2, $3, $4
+)
+RETURNING id
+`
+
+type InsertMachineMetricParams struct {
+	MachineID int64
+	Qr        bool
+	Source    string
+	Admin     bool
+}
+
+func (q *Queries) InsertMachineMetric(ctx context.Context, arg InsertMachineMetricParams) (int64, error) {
+	row := q.db.QueryRow(ctx, insertMachineMetric,
+		arg.MachineID,
+		arg.Qr,
+		arg.Source,
+		arg.Admin,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const listMachines = `-- name: ListMachines :many
 SELECT id, location, rows, columns
 FROM machine

@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 // Domain Models
 type Machine struct {
 	ID       int64  `json:"id"`
@@ -46,4 +48,12 @@ type MachineWithBooks struct {
 type MachineLoadResponse struct {
 	MachineID int64 `json:"machine_id"`
 	Count     int   `json:"count"`
+}
+
+type MachineMetric struct {
+	MachineID int64     `json:"machine_id"`
+	Date      time.Time `json:"date"`
+	Qr        bool      `json:"qr"`
+	Source    string    `json:"source"`
+	Admin     bool      `json:"admin"`
 }

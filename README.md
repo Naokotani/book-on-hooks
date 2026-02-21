@@ -126,3 +126,13 @@ Notes:
 
 - The `is_qr` value is session-scoped (tab/session lifetime), so it persists across back/forward and multiple summary clicks during the session.
 - This QR behavior is only applied for machine-grid sourced clicks (`source=location-grid`).
+
+## Best-Effort Metrics
+
+Machine metrics are recorded as best-effort telemetry and must not break core user flows.
+
+Current behavior:
+
+- If metric query params are invalid (for example, malformed `is_qr` or `source`), the API logs a warning and still returns the machine response.
+- If metric insert fails, the API logs an error and still returns the machine response.
+- Only core machine lookup errors (missing machine, DB read failures) affect the HTTP response status.

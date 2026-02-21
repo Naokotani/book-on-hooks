@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"booksonhooks.ca/internal/domain"
@@ -120,6 +121,25 @@ func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int6
 		},
 		Qr:     qr,
 		Source: sourceText,
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return metricID, nil
+}
+
+func (db *Database) InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool) (int64, error) {
+	s := strings.TrimSpace(strings.ToLower(source))
+	if s == "" {
+		s = "unknown"
+	}
+
+	metricID, err := db.Q.InsertMachineMetric(ctx, sqlc.InsertMachineMetricParams{
+		MachineID: machineID,
+		Qr:        qr,
+		Source:    s,
+		Admin:     admin,
 	})
 	if err != nil {
 		return 0, err

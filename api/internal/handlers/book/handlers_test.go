@@ -4,6 +4,7 @@ import (
 	"booksonhooks.ca/internal/logger"
 	"context"
 	"encoding/json"
+	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -159,6 +160,10 @@ func TestGetBookLocationsHandler_ValidQueryString(t *testing.T) {
 
 func TestGetBookLocationsHandler_InvalidQueryString(t *testing.T) {
 	mockRepo := &mockBookRepo{
+		insertBookMetricFn: func(bookID, machineID int64, qr bool, source string) (int64, error) {
+			t.Fatal("InsertBookMetric should not be called for invalid query params")
+			return 0, nil
+		},
 		getBookLocationsFn: func(bookID int64) (*domain.BookLocation, error) {
 			return &domain.BookLocation{BookID: bookID}, nil
 		},
@@ -174,13 +179,17 @@ func TestGetBookLocationsHandler_InvalidQueryString(t *testing.T) {
 
 	h.GetBookSummary(rr, req)
 
-	if rr.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", rr.Code)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
 	}
 }
 
 func TestGetBookLocationsHandler_InvalidSource(t *testing.T) {
 	mockRepo := &mockBookRepo{
+		insertBookMetricFn: func(bookID, machineID int64, qr bool, source string) (int64, error) {
+			t.Fatal("InsertBookMetric should not be called for invalid source")
+			return 0, nil
+		},
 		getBookLocationsFn: func(bookID int64) (*domain.BookLocation, error) {
 			return &domain.BookLocation{BookID: bookID}, nil
 		},
@@ -196,7 +205,32 @@ func TestGetBookLocationsHandler_InvalidSource(t *testing.T) {
 
 	h.GetBookSummary(rr, req)
 
-	if rr.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", rr.Code)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+}
+
+func TestGetBookLocationsHandler_MetricInsertErrorDoesNotFailRequest(t *testing.T) {
+	mockRepo := &mockBookRepo{
+		insertBookMetricFn: func(bookID, machineID int64, qr bool, source string) (int64, error) {
+			return 0, errors.New("insert failed")
+		},
+		getBookLocationsFn: func(bookID int64) (*domain.BookLocation, error) {
+			return &domain.BookLocation{BookID: bookID}, nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=true&machine=9&source=location-grid", nil)
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.GetBookSummary(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
 	}
 }
