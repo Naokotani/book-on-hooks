@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 func (h *MachineHandler) writeJSON(w http.ResponseWriter, status int, data any) {
@@ -79,10 +78,6 @@ func validateAndMapLoadBooks(machineID int64, machine *domain.Machine, payloadBo
 	return books, nil
 }
 
-func isAdminSource(source string) bool {
-	return strings.HasPrefix(source, "admin-")
-}
-
 func (h *MachineHandler) recordMachineMetric(r *http.Request, machineID int64) {
 	var (
 		isQr      bool
@@ -90,19 +85,19 @@ func (h *MachineHandler) recordMachineMetric(r *http.Request, machineID int64) {
 		hasErrors bool
 	)
 
-	parsedQr, err := requestx.ParseOptionalBool(r.URL.Query().Get("is_qr"))
+	parsedQr, err := requestx.ParseOptionalQueryBool(r, "is_qr")
 	if err != nil {
 		h.log.Warn("skipping machine metric: invalid is_qr machine_id=%d raw=%q err=%v",
-			machineID, r.URL.Query().Get("is_qr"), err)
+			machineID, requestx.QueryString(r, "is_qr"), err)
 		hasErrors = true
 	} else {
 		isQr = parsedQr
 	}
 
-	parsedSource, err := requestx.ParseOptionalSource(r.URL.Query().Get("source"))
+	parsedSource, err := requestx.ParseOptionalQuerySource(r, "source")
 	if err != nil {
 		h.log.Warn("skipping machine metric: invalid source machine_id=%d raw=%q err=%v",
-			machineID, r.URL.Query().Get("source"), err)
+			machineID, requestx.QueryString(r, "source"), err)
 		hasErrors = true
 	} else {
 		source = parsedSource
@@ -112,7 +107,7 @@ func (h *MachineHandler) recordMachineMetric(r *http.Request, machineID int64) {
 		return
 	}
 
-	admin := isAdminSource(source)
+	admin := requestx.IsAdminSource(source)
 
 	if _, err := h.repo.InsertMachineMetric(r.Context(), machineID, isQr, source, admin); err != nil {
 		h.log.Error("failed to insert machine metric: machine_id=%d is_qr=%t source=%q admin=%t err=%v",

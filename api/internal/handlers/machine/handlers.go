@@ -5,15 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
-	"strings"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/jackc/pgx/v5"
 
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/httpErrors"
 	"booksonhooks.ca/internal/logger"
+	"booksonhooks.ca/internal/requestx"
 	"booksonhooks.ca/internal/validator"
 )
 
@@ -52,7 +50,7 @@ func (h *MachineHandler) CreateMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload.Location = strings.TrimSpace(payload.Location)
+	payload.Location = requestx.NormalizeText(payload.Location)
 	if !validator.NotBlank(payload.Location) || !validator.MaxChars(payload.Location, 100) {
 		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
 		return
@@ -76,14 +74,13 @@ func (h *MachineHandler) CreateMachine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	machine, err := h.repo.GetMachineById(r.Context(), int64(id))
+	machine, err := h.repo.GetMachineById(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
@@ -102,34 +99,32 @@ func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	books, httpErr := validateAndMapLoadBooks(int64(id), machine, payload.Books)
+	books, httpErr := validateAndMapLoadBooks(id, machine, payload.Books)
 	if httpErr != nil {
 		httpErrors.ClientError(w, httpErr.Status)
 		return
 	}
 
-	if err := h.repo.LoadMachine(r.Context(), int64(id), books); err != nil {
+	if err := h.repo.LoadMachine(r.Context(), id, books); err != nil {
 		h.log.Error("failed to load machine: %v", err)
 		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
 	}
 
 	h.writeJSON(w, http.StatusOK, domain.MachineLoadResponse{
-		MachineID: int64(id),
+		MachineID: id,
 		Count:     len(books),
 	})
 }
 
 func (h *MachineHandler) GetMachine(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	machine, err := h.repo.GetMachineById(r.Context(), int64(id))
+	machine, err := h.repo.GetMachineById(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
@@ -144,10 +139,8 @@ func (h *MachineHandler) GetMachine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-	id, err := strconv.Atoi(params.ByName("id"))
-
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
@@ -158,7 +151,7 @@ func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload.Location = strings.TrimSpace(payload.Location)
+	payload.Location = requestx.NormalizeText(payload.Location)
 	if !validator.NotBlank(payload.Location) || !validator.MaxChars(payload.Location, 100) {
 		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
 		return
@@ -168,7 +161,7 @@ func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	machine := mapMachineUpsertToMachine(int64(id), payload)
+	machine := mapMachineUpsertToMachine(id, payload)
 
 	if err := h.repo.UpdateMachine(r.Context(), machine); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -184,14 +177,13 @@ func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MachineHandler) DeleteMachine(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	if _, err := h.repo.GetMachineById(r.Context(), int64(id)); err != nil {
+	if _, err := h.repo.GetMachineById(r.Context(), id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
 			return
@@ -201,7 +193,7 @@ func (h *MachineHandler) DeleteMachine(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.DeleteMachine(r.Context(), int64(id)); err != nil {
+	if err := h.repo.DeleteMachine(r.Context(), id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
 			return
@@ -215,15 +207,13 @@ func (h *MachineHandler) DeleteMachine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MachineHandler) ClearMachineBooks(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	if err := h.repo.ClearMachineBooks(r.Context(), int64(id)); err != nil {
+	if err := h.repo.ClearMachineBooks(r.Context(), id); err != nil {
 		h.log.Error("failed to clear machine books: %v", err)
 		httpErrors.ServerError(w, http.StatusInternalServerError)
 		return
@@ -233,14 +223,13 @@ func (h *MachineHandler) ClearMachineBooks(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *MachineHandler) GetMachineWithBooks(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	result, err := h.repo.GetMachineWithBooks(r.Context(), int64(id))
+	result, err := h.repo.GetMachineWithBooks(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
@@ -251,7 +240,7 @@ func (h *MachineHandler) GetMachineWithBooks(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	h.recordMachineMetric(r, int64(id))
+	h.recordMachineMetric(r, id)
 
 	h.writeJSON(w, http.StatusOK, result)
 }

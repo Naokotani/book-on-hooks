@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/httpErrors"
 	"booksonhooks.ca/internal/logger"
+	"booksonhooks.ca/internal/requestx"
 	"github.com/jackc/pgx/v5"
 	"github.com/julienschmidt/httprouter"
 )
@@ -58,15 +58,13 @@ func (h *BookHandler) GetBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	book, err := h.repo.GetBookByID(r.Context(), int64(id))
+	book, err := h.repo.GetBookByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
@@ -81,15 +79,13 @@ func (h *BookHandler) GetBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) GetBookSummary(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	bookLocation, err := h.repo.GetBookLocations(r.Context(), int64(id))
+	bookLocation, err := h.repo.GetBookLocations(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
@@ -100,7 +96,7 @@ func (h *BookHandler) GetBookSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.recordBookMetric(r, int64(id))
+	h.recordBookMetric(r, id)
 
 	h.writeJSON(w, http.StatusOK, bookLocation)
 }
@@ -160,9 +156,8 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
@@ -173,12 +168,7 @@ func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metadata := bookCreateRequest{
-		Title:   strings.TrimSpace(payload.Title),
-		Author:  strings.TrimSpace(payload.Author),
-		Summary: strings.TrimSpace(payload.Summary),
-		Price:   strings.TrimSpace(payload.Price),
-	}
+	metadata := mapBookUpdateRequestToMetadata(payload)
 	if fieldErrors := validateBookMetadata(metadata); len(fieldErrors) > 0 {
 		h.log.Warn("invalid update-book payload: field_errors=%v", fieldErrors)
 		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
@@ -188,12 +178,7 @@ func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload.Title = metadata.Title
-	payload.Author = metadata.Author
-	payload.Summary = metadata.Summary
-	payload.Price = metadata.Price
-
-	book := mapBookUpdateRequestToBook(int64(id), payload)
+	book := mapBookMetadataToBook(id, metadata)
 
 	if err := h.repo.UpdateBook(r.Context(), book); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -209,10 +194,8 @@ func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) UpdateBookImage(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
@@ -232,7 +215,7 @@ func (h *BookHandler) UpdateBookImage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	warning, err := h.repo.UpdateBookImage(r.Context(), int64(id), file, header)
+	warning, err := h.repo.UpdateBookImage(r.Context(), id, file, header)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
@@ -246,7 +229,7 @@ func (h *BookHandler) UpdateBookImage(w http.ResponseWriter, r *http.Request) {
 		h.log.Warn("%s", warning)
 	}
 
-	book, err := h.repo.GetBookByID(r.Context(), int64(id))
+	book, err := h.repo.GetBookByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)
@@ -261,14 +244,13 @@ func (h *BookHandler) UpdateBookImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BookHandler) DeleteBook(w http.ResponseWriter, r *http.Request) {
-	params := httprouter.ParamsFromContext(r.Context())
-	id, err := strconv.Atoi(params.ByName("id"))
-	if err != nil || id <= 0 {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
 		httpErrors.NotFound(w)
 		return
 	}
 
-	warning, err := h.repo.DeleteBook(r.Context(), int64(id))
+	warning, err := h.repo.DeleteBook(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			httpErrors.NotFound(w)

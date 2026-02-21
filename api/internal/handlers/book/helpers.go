@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
-	"strings"
 )
 
 func (h *BookHandler) writeJSON(w http.ResponseWriter, status int, data any) {
@@ -29,6 +28,25 @@ func mapBookUpdateRequestToBook(id int64, req domain.BookUpdateRequest) *domain.
 	}
 }
 
+func mapBookUpdateRequestToMetadata(req domain.BookUpdateRequest) bookCreateRequest {
+	return bookCreateRequest{
+		Title:   requestx.NormalizeText(req.Title),
+		Author:  requestx.NormalizeText(req.Author),
+		Summary: requestx.NormalizeText(req.Summary),
+		Price:   requestx.NormalizeText(req.Price),
+	}
+}
+
+func mapBookMetadataToBook(id int64, req bookCreateRequest) *domain.Book {
+	return &domain.Book{
+		ID:      id,
+		Title:   req.Title,
+		Author:  req.Author,
+		Summary: req.Summary,
+		Price:   req.Price,
+	}
+}
+
 type bookCreateRequest struct {
 	Title   string
 	Author  string
@@ -38,10 +56,10 @@ type bookCreateRequest struct {
 
 func validateCreateBookMetadata(r *http.Request) (bookCreateRequest, map[string]string) {
 	req := bookCreateRequest{
-		Title:   strings.TrimSpace(r.PostFormValue("title")),
-		Author:  strings.TrimSpace(r.PostFormValue("author")),
-		Summary: strings.TrimSpace(r.PostFormValue("summary")),
-		Price:   strings.TrimSpace(r.PostFormValue("price")),
+		Title:   requestx.NormalizeText(r.PostFormValue("title")),
+		Author:  requestx.NormalizeText(r.PostFormValue("author")),
+		Summary: requestx.NormalizeText(r.PostFormValue("summary")),
+		Price:   requestx.NormalizeText(r.PostFormValue("price")),
 	}
 
 	return req, validateBookMetadata(req)
@@ -101,28 +119,28 @@ func (h *BookHandler) recordBookMetric(r *http.Request, bookID int64) {
 		hasErrors bool
 	)
 
-	parsedQr, err := requestx.ParseOptionalBool(r.URL.Query().Get("is_qr"))
+	parsedQr, err := requestx.ParseOptionalQueryBool(r, "is_qr")
 	if err != nil {
 		h.log.Warn("skipping book metric: invalid is_qr book_id=%d raw=%q err=%v",
-			bookID, r.URL.Query().Get("is_qr"), err)
+			bookID, requestx.QueryString(r, "is_qr"), err)
 		hasErrors = true
 	} else {
 		isQr = parsedQr
 	}
 
-	parsedMachineID, err := requestx.ParseOptionalInt64(r.URL.Query().Get("machine"))
+	parsedMachineID, err := requestx.ParseOptionalQueryInt64(r, "machine")
 	if err != nil {
 		h.log.Warn("skipping book metric: invalid machine book_id=%d raw=%q err=%v",
-			bookID, r.URL.Query().Get("machine"), err)
+			bookID, requestx.QueryString(r, "machine"), err)
 		hasErrors = true
 	} else {
 		machineID = parsedMachineID
 	}
 
-	parsedSource, err := requestx.ParseOptionalSource(r.URL.Query().Get("source"))
+	parsedSource, err := requestx.ParseOptionalQuerySource(r, "source")
 	if err != nil {
 		h.log.Warn("skipping book metric: invalid source book_id=%d raw=%q err=%v",
-			bookID, r.URL.Query().Get("source"), err)
+			bookID, requestx.QueryString(r, "source"), err)
 		hasErrors = true
 	} else {
 		source = parsedSource
