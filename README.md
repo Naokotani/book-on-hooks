@@ -98,6 +98,21 @@ To remove all volumes (including images and DB data):
 podman compose down -v
 ```
 
+## Packages
+
+Backend package overview (`api/internal`):
+
+- `app`: application wiring, middleware, and route setup.
+- `domain`: shared domain models and request/response DTO structs.
+- `handlers/book`: HTTP handlers for book endpoints and book metric recording.
+- `handlers/machine`: HTTP handlers for machine endpoints and machine metric recording.
+- `repository`: database-facing persistence and transactional operations.
+- `requestx`: shared request parsing and normalization helpers.
+- `validator`: reusable field-level validation helpers.
+- `httpErrors`: common HTTP error response helpers (including structured validation errors).
+- `logger`: logging abstraction used across the API.
+- `sqlc`: generated query types and database methods from SQL files.
+
 ## QR Metrics Flow
 
 Book click metrics are written when the summary endpoint is called with `machine` (and optional metadata):
