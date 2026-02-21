@@ -12,7 +12,6 @@ import (
 	"booksonhooks.ca/internal/httpErrors"
 	"booksonhooks.ca/internal/logger"
 	"booksonhooks.ca/internal/requestx"
-	"booksonhooks.ca/internal/validator"
 )
 
 type MachineRepo interface {
@@ -51,12 +50,9 @@ func (h *MachineHandler) CreateMachine(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload.Location = requestx.NormalizeText(payload.Location)
-	if !validator.NotBlank(payload.Location) || !validator.MaxChars(payload.Location, 100) {
-		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
-		return
-	}
-	if !validator.PositiveInt(payload.Rows) || !validator.PositiveInt(payload.Cols) {
-		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+	if fieldErrors := validateMachineUpsertFields(payload.Location, payload.Rows, payload.Cols); len(fieldErrors) > 0 {
+		h.log.Warn("invalid create-machine payload: field_errors=%v", fieldErrors)
+		httpErrors.ValidationError(w, fieldErrors)
 		return
 	}
 
@@ -152,12 +148,9 @@ func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload.Location = requestx.NormalizeText(payload.Location)
-	if !validator.NotBlank(payload.Location) || !validator.MaxChars(payload.Location, 100) {
-		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
-		return
-	}
-	if !validator.PositiveInt(payload.Rows) || !validator.PositiveInt(payload.Cols) {
-		httpErrors.ClientError(w, http.StatusUnprocessableEntity)
+	if fieldErrors := validateMachineUpsertFields(payload.Location, payload.Rows, payload.Cols); len(fieldErrors) > 0 {
+		h.log.Warn("invalid update-machine payload: field_errors=%v", fieldErrors)
+		httpErrors.ValidationError(w, fieldErrors)
 		return
 	}
 

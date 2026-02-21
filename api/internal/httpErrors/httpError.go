@@ -1,6 +1,7 @@
 package httpErrors
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
@@ -22,4 +23,13 @@ func ServerError(w http.ResponseWriter, status int) {
 
 func NotFound(w http.ResponseWriter) {
 	ClientError(w, http.StatusNotFound)
+}
+
+func ValidationError(w http.ResponseWriter, fieldErrors map[string]string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"error":        "failed to validate form",
+		"field_errors": fieldErrors,
+	})
 }

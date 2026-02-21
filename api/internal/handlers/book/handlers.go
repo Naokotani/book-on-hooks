@@ -114,20 +114,14 @@ func (h *BookHandler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	createReq, fieldErrors := validateCreateBookMetadata(r)
 	if len(fieldErrors) > 0 {
 		h.log.Warn("invalid create-book payload: field_errors=%v", fieldErrors)
-		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
-			"error":        "failed to validate form",
-			"field_errors": fieldErrors,
-		})
+		httpErrors.ValidationError(w, fieldErrors)
 		return
 	}
 
 	file, header, fieldErrors := validateBookImage(r)
 	if len(fieldErrors) > 0 {
 		h.log.Warn("invalid create-book image: field_errors=%v", fieldErrors)
-		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
-			"error": "failed to upload file",
-			"field_errors": fieldErrors,
-		})
+		httpErrors.ValidationError(w, fieldErrors)
 		return
 	}
 	defer file.Close()
@@ -171,10 +165,7 @@ func (h *BookHandler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	metadata := mapBookUpdateRequestToMetadata(payload)
 	if fieldErrors := validateBookMetadata(metadata); len(fieldErrors) > 0 {
 		h.log.Warn("invalid update-book payload: field_errors=%v", fieldErrors)
-		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
-			"error":        "failed to validate form",
-			"field_errors": fieldErrors,
-		})
+		httpErrors.ValidationError(w, fieldErrors)
 		return
 	}
 
@@ -207,10 +198,7 @@ func (h *BookHandler) UpdateBookImage(w http.ResponseWriter, r *http.Request) {
 
 	file, header, fieldErrors := validateBookImage(r)
 	if len(fieldErrors) > 0 {
-		h.writeJSON(w, http.StatusUnprocessableEntity, map[string]any{
-			"error":        "failed to validate form",
-			"field_errors": fieldErrors,
-		})
+		httpErrors.ValidationError(w, fieldErrors)
 		return
 	}
 	defer file.Close()

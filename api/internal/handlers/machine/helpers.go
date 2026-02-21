@@ -4,6 +4,7 @@ import (
 	"booksonhooks.ca/internal/domain"
 	"booksonhooks.ca/internal/httpErrors"
 	"booksonhooks.ca/internal/requestx"
+	"booksonhooks.ca/internal/validator"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -42,6 +43,26 @@ func mapMachineRequestToMachine(req domain.MachineRequest) *domain.Machine {
 		Rows:     req.Rows,
 		Cols:     req.Cols,
 	}
+}
+
+func validateMachineUpsertFields(location string, rows, cols int) map[string]string {
+	fieldErrors := make(map[string]string)
+
+	if !validator.NotBlank(location) {
+		fieldErrors["location"] = "This field cannot be blank"
+	} else if !validator.MaxChars(location, 100) {
+		fieldErrors["location"] = "This field can have a maximum of 100 characters"
+	}
+
+	if !validator.PositiveInt(rows) {
+		fieldErrors["rows"] = "Must be a positive integer"
+	}
+
+	if !validator.PositiveInt(cols) {
+		fieldErrors["cols"] = "Must be a positive integer"
+	}
+
+	return fieldErrors
 }
 
 type slot struct {
