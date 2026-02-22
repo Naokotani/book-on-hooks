@@ -217,6 +217,8 @@ func (h *BookHandler) UpdateBookImage(w http.ResponseWriter, r *http.Request) {
 		h.log.Warn("%s", warning)
 	}
 
+	h.log.Info("updated image to %s", file)
+
 	book, err := h.repo.GetBookByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
