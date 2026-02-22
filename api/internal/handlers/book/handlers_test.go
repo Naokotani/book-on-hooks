@@ -110,7 +110,7 @@ func TestGetBookHandler(t *testing.T) {
 	logger := logger.NewLogger("info")
 	h := New(&logger, mockRepo)
 
-	req := httptest.NewRequest("GET", "/api/books/12", nil)
+	req := httptest.NewRequest("GET", "/api/books/book/12", nil)
 	params := httprouter.Params{{Key: "id", Value: "12"}}
 	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()
@@ -146,7 +146,7 @@ func TestGetBookLocationsHandler_ValidQueryString(t *testing.T) {
 	logger := logger.NewLogger("info")
 	h := New(&logger, mockRepo)
 
-	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=true&machine=9&source=location-grid", nil)
+	req := httptest.NewRequest("GET", "/api/books/summary/7?is_qr=true&machine=9&source=location-grid", nil)
 	params := httprouter.Params{{Key: "id", Value: "7"}}
 	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()
@@ -172,7 +172,7 @@ func TestGetBookLocationsHandler_InvalidQueryString(t *testing.T) {
 	logger := logger.NewLogger("info")
 	h := New(&logger, mockRepo)
 
-	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=nope&machine=9", nil)
+	req := httptest.NewRequest("GET", "/api/books/summary/7?is_qr=nope&machine=9", nil)
 	params := httprouter.Params{{Key: "id", Value: "7"}}
 	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()
@@ -198,7 +198,7 @@ func TestGetBookLocationsHandler_InvalidSource(t *testing.T) {
 	logger := logger.NewLogger("info")
 	h := New(&logger, mockRepo)
 
-	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=true&machine=9&source=bad/source", nil)
+	req := httptest.NewRequest("GET", "/api/books/summary/7?is_qr=true&machine=9&source=bad/source", nil)
 	params := httprouter.Params{{Key: "id", Value: "7"}}
 	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()
@@ -223,7 +223,7 @@ func TestGetBookLocationsHandler_MetricInsertErrorDoesNotFailRequest(t *testing.
 	logger := logger.NewLogger("info")
 	h := New(&logger, mockRepo)
 
-	req := httptest.NewRequest("GET", "/api/books/7/summary?is_qr=true&machine=9&source=location-grid", nil)
+	req := httptest.NewRequest("GET", "/api/books/summary/7?is_qr=true&machine=9&source=location-grid", nil)
 	params := httprouter.Params{{Key: "id", Value: "7"}}
 	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
 	rr := httptest.NewRecorder()

@@ -1,13 +1,20 @@
 import { useState } from "react";
+import BookForm from "./BookForm";
 
 export default function AdminCreateBook() {
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [summary, setSummary] = useState("");
-  const [price, setPrice] = useState("");
+  const [values, setValues] = useState({
+    title: "",
+    author: "",
+    summary: "",
+    price: "",
+  });
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  function updateField(field, value) {
+    setValues((prev) => ({ ...prev, [field]: value }));
+  }
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -34,10 +41,12 @@ export default function AdminCreateBook() {
       }
 
       setMessage("Book create request succeeded.");
-      setTitle("");
-      setAuthor("");
-      setSummary("");
-      setPrice("");
+      setValues({
+        title: "",
+        author: "",
+        summary: "",
+        price: "",
+      });
       form.reset();
     } catch (err) {
       setError(err instanceof Error ? err.message : "failed to create book");
@@ -49,71 +58,15 @@ export default function AdminCreateBook() {
   return (
     <section className="admin-panel">
       <h1>create book</h1>
-      <form className="admin-form" onSubmit={onSubmit} encType="multipart/form-data">
-        <div className="admin-field">
-          <label htmlFor="title">Title</label>
-          <input
-            className="admin-input"
-            id="title"
-            name="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="admin-field">
-          <label htmlFor="author">Author</label>
-          <input
-            className="admin-input"
-            id="author"
-            name="author"
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="admin-field">
-          <label htmlFor="summary">Summary</label>
-          <textarea
-            className="admin-input"
-            id="summary"
-            name="summary"
-            value={summary}
-            onChange={(e) => setSummary(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="admin-field">
-          <label htmlFor="price">Price</label>
-          <input
-            className="admin-input"
-            id="price"
-            name="price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="admin-field">
-          <label htmlFor="image">Image</label>
-          <input
-            className="admin-input"
-            id="image"
-            name="image"
-            type="file"
-            accept="image/*"
-            required
-          />
-        </div>
-
-        <button className="admin-btn" type="submit" disabled={submitting}>
-          {submitting ? "Creating..." : "Create Book"}
-        </button>
-      </form>
+      <BookForm
+        values={values}
+        onChange={updateField}
+        onSubmit={onSubmit}
+        submitting={submitting}
+        requireImage
+        submitLabel="Create Book"
+        submittingLabel="Creating..."
+      />
 
       {message ? <p className="admin-message admin-message-success">{message}</p> : null}
       {error ? <p className="admin-message admin-message-error">error: {error}</p> : null}

@@ -16,7 +16,7 @@ export default function BookLocation() {
         setLoading(true);
         setError("");
 
-        const res = await fetch(`/api/books/${id}/summary${location.search}`);
+        const res = await fetch(`/api/books/summary/${id}${location.search}`);
         if (res.status === 404) {
           if (!cancelled) {
             setData(null);

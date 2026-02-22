@@ -14,6 +14,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminHome from "./components/admin/AdminHome";
 import AdminBooks from "./components/admin/AdminBooks";
 import AdminCreateBook from "./components/admin/AdminCreateBook";
+import AdminUpdateBook from "./components/admin/AdminUpdateBook";
 import AdminCreateMachine from "./components/admin/AdminCreateMachine";
 import AdminMachineLoad from "./components/admin/AdminMachineLoad";
 
@@ -37,6 +38,7 @@ function App() {
           <Route index element={<AdminHome />} />
           <Route path="books" element={<AdminBooks />} />
           <Route path="book/create" element={<AdminCreateBook />} />
+          <Route path="book/:id/update" element={<AdminUpdateBook />} />
           <Route path="machine/create" element={<AdminCreateMachine />} />
           <Route path="machine/load/:id" element={<AdminMachineLoad />} />
         </Route>

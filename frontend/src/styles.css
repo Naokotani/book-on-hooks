@@ -664,6 +664,62 @@ div.card-content {
   border: 1px solid #b22222;
 }
 
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 2000;
+}
+
+.confirm-modal {
+  width: min(460px, 100%);
+  background: var(--darkBkg);
+  border: 1px solid var(--borderColor);
+  border-radius: 0.6rem;
+  padding: 1rem 1.2rem;
+}
+
+.confirm-modal-title {
+  margin: 0;
+}
+
+.confirm-modal-message {
+  margin: 0.8rem 0 1rem;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.confirm-modal-btn {
+  border: 1px solid var(--borderColor);
+  border-radius: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.confirm-modal-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.confirm-modal-btn-cancel {
+  background: transparent;
+  color: var(--textColor);
+}
+
+.confirm-modal-btn-danger {
+  background: #b22222;
+  border-color: #b22222;
+  color: #fff;
+}
+
 /* Footer */
 
 footer {

@@ -69,6 +69,17 @@ func (h *MachineHandler) CreateMachine(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusCreated, machine)
 }
 
+func (h *MachineHandler) GetMachines(w http.ResponseWriter, r *http.Request) {
+	machines, err := h.repo.GetMachines(r.Context())
+	if err != nil {
+		h.log.Error("failed to get machines: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, machines)
+}
+
 func (h *MachineHandler) LoadMachine(w http.ResponseWriter, r *http.Request) {
 	id, err := requestx.ParsePathID(r, "id")
 	if err != nil {

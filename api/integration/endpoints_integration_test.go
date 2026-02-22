@@ -178,7 +178,7 @@ func TestBookCRUD_Integration(t *testing.T) {
 	ts, conn := newTestServer(t)
 	bookID := seedBook(t, conn, "Seed Book")
 
-	resp := reqJSON(t, http.MethodGet, fmt.Sprintf("%s/api/books/%d", ts.URL, bookID), nil)
+	resp := reqJSON(t, http.MethodGet, fmt.Sprintf("%s/api/books/book/%d", ts.URL, bookID), nil)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("GET book expected 200, got %d", resp.StatusCode)
 	}
@@ -188,7 +188,7 @@ func TestBookCRUD_Integration(t *testing.T) {
 		t.Fatalf("expected book id %d, got %d", bookID, got.ID)
 	}
 
-	resp = reqJSON(t, http.MethodPatch, fmt.Sprintf("%s/api/books/%d", ts.URL, bookID), map[string]any{
+	resp = reqJSON(t, http.MethodPatch, fmt.Sprintf("%s/api/books/book/%d", ts.URL, bookID), map[string]any{
 		"title":   "Updated Title",
 		"author":  "Updated Author",
 		"summary": "Updated Summary",
@@ -203,13 +203,13 @@ func TestBookCRUD_Integration(t *testing.T) {
 		t.Fatalf("expected updated title, got %q", updated.Title)
 	}
 
-	resp = reqJSON(t, http.MethodDelete, fmt.Sprintf("%s/api/books/%d", ts.URL, bookID), nil)
+	resp = reqJSON(t, http.MethodDelete, fmt.Sprintf("%s/api/books/book/%d", ts.URL, bookID), nil)
 	if resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("DELETE book expected 204, got %d", resp.StatusCode)
 	}
 	_ = resp.Body.Close()
 
-	resp = reqJSON(t, http.MethodGet, fmt.Sprintf("%s/api/books/%d", ts.URL, bookID), nil)
+	resp = reqJSON(t, http.MethodGet, fmt.Sprintf("%s/api/books/book/%d", ts.URL, bookID), nil)
 	if resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("GET deleted book expected 404, got %d", resp.StatusCode)
 	}
