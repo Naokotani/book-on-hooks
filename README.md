@@ -113,8 +113,19 @@ Backend package overview (`api/internal`):
 - `logger`: logging abstraction used across the API.
 - `sqlc`: generated query types and database methods from SQL files.
 
-## QR Metrics Flow
+## Metrics
 
+### Best-Effort
+
+Machine metrics are recorded as best-effort telemetry and must not break core user flows.
+
+Current behavior:
+
+- If metric query params are invalid (for example, malformed `is_qr` or `source`), the API logs a warning and still returns the machine response.
+- If metric insert fails, the API logs an error and still returns the machine response.
+- Only core machine lookup errors (missing machine, DB read failures) affect the HTTP response status.
+
+### QR and Session Metrics Flow
 Book click metrics are written when the summary endpoint is called with `machine` (and optional metadata):
 
 - `machine`: machine id
@@ -145,12 +156,3 @@ Notes:
 - The `is_qr` value is session-scoped (tab/session lifetime), so it persists across back/forward and multiple summary clicks during the session.
 - This QR behavior is only applied for machine-grid sourced clicks (`source=location-grid`).
 
-## Best-Effort Metrics
-
-Machine metrics are recorded as best-effort telemetry and must not break core user flows.
-
-Current behavior:
-
-- If metric query params are invalid (for example, malformed `is_qr` or `source`), the API logs a warning and still returns the machine response.
-- If metric insert fails, the API logs an error and still returns the machine response.
-- Only core machine lookup errors (missing machine, DB read failures) affect the HTTP response status.
