@@ -36,8 +36,9 @@ INSERT INTO machine_metrics (
     date,
     qr,
     source,
-    admin
+    admin,
+    session_id
 ) VALUES (
-    $1, NOW()::date, $2, $3, $4
+    $1, NOW()::date, $2, $3, $4, $5
 )
 RETURNING id;

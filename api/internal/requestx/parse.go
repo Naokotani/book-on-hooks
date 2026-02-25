@@ -75,6 +75,23 @@ func ParseOptionalSource(v string) (string, error) {
 	return s, nil
 }
 
+func ParseOptionalSessionID(v string) (string, error) {
+	s := strings.TrimSpace(v)
+	if s == "" {
+		return "", nil
+	}
+	if len(s) > 64 {
+		return "", errors.New("session_id too long")
+	}
+	for _, ch := range s {
+		if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '-' {
+			continue
+		}
+		return "", errors.New("invalid session_id")
+	}
+	return s, nil
+}
+
 func ParseOptionalQueryBool(r *http.Request, key string) (bool, error) {
 	v, err := ParseOptionalBool(QueryString(r, key))
 	if err != nil {
@@ -93,6 +110,14 @@ func ParseOptionalQueryInt64(r *http.Request, key string) (int64, error) {
 
 func ParseOptionalQuerySource(r *http.Request, key string) (string, error) {
 	v, err := ParseOptionalSource(QueryString(r, key))
+	if err != nil {
+		return "", &ParseError{Field: key, Err: err}
+	}
+	return v, nil
+}
+
+func ParseOptionalQuerySessionID(r *http.Request, key string) (string, error) {
+	v, err := ParseOptionalSessionID(QueryString(r, key))
 	if err != nil {
 		return "", &ParseError{Field: key, Err: err}
 	}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { getSessionQr, persistQrFromSearch } from "../lib/metricsSession";
+import { getMetricsSession, initMetricsSession } from "../lib/metricsSession";
 
 function keyFor(row, col) {
   return `${row}-${col}`;
@@ -15,14 +15,19 @@ export default function LocationMachineView() {
 
   useEffect(() => {
     let cancelled = false;
-    persistQrFromSearch(location.search);
+    const metrics = initMetricsSession(location.search);
 
     async function loadMachine() {
       try {
         setLoading(true);
         setError("");
 
-        const res = await fetch(`/api/machines/${id}/books`);
+        const metricParams = new URLSearchParams();
+        metricParams.set("source", "location-grid");
+        metricParams.set("is_qr", metrics.isQr ? "true" : "false");
+        metricParams.set("session_id", metrics.sessionId);
+
+        const res = await fetch(`/api/machines/${id}/books?${metricParams.toString()}`);
         if (res.status === 404) {
           if (!cancelled) {
             setMachineData({ machine: null, books: [] });
@@ -101,9 +106,11 @@ export default function LocationMachineView() {
               const loadedBook = bySlot.get(keyFor(row, col));
 
               const params = new URLSearchParams(location.search);
+              const session = getMetricsSession();
               params.set("machine", String(machine.id));
               params.set("source", "location-grid");
-              params.set("is_qr", getSessionQr() ? "true" : "false");
+              params.set("is_qr", session.isQr ? "true" : "false");
+              params.set("session_id", session.sessionId);
 
               return (
                 <article key={keyFor(row, col)} className="machine-slot-card">

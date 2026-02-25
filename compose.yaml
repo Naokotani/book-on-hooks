@@ -4,7 +4,7 @@ services:
     image: books-api:latest
     command: /usr/local/bin/app
     volumes:
-      - books-images:/usr/local/bin/images
+      - books-images:/data/images
     ports:
       - 4000:4000
     networks:
@@ -19,7 +19,7 @@ services:
       AIR_WD: /usr/src/app/api
     volumes:
       - ./api:/usr/src/app/api:Z
-      - books-images:/usr/src/app/api/images
+      - books-images:/data/images
     ports:
       - "5000:4000"
     networks:
@@ -69,7 +69,6 @@ services:
     environment:
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
-      VITE_API_PROXY_TARGET: "http://dev:4000"
     volumes:
       - ./frontend:/usr/src/app:Z
     networks:

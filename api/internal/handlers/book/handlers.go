@@ -28,7 +28,7 @@ type BookRepo interface {
 	UpdateBook(ctx context.Context, book *domain.Book) error
 	UpdateBookImage(ctx context.Context, id int64, file multipart.File, header *multipart.FileHeader) (string, error)
 	DeleteBook(ctx context.Context, id int64) (string, error)
-	InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool, source string) (int64, error)
+	InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool, source, sessionID string) (int64, error)
 }
 
 type BookHandler struct {
@@ -217,7 +217,7 @@ func (h *BookHandler) UpdateBookImage(w http.ResponseWriter, r *http.Request) {
 		h.log.Warn("%s", warning)
 	}
 
-	h.log.Info("updated image to %s", file)
+	h.log.Info("updated image to %s", header.Filename)
 
 	book, err := h.repo.GetBookByID(r.Context(), id)
 	if err != nil {

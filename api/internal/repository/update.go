@@ -33,6 +33,11 @@ func (db *Database) UpdateBookImage(ctx context.Context, id int64, file multipar
 		return "", err
 	}
 
+	if err != nil {
+		_ = os.Remove(filepath.Join(imageDir(), "covers", book.Image))
+		return "", err
+	}
+
 	newFilename, err := storeBookImage(id, file, header)
 	if err != nil {
 		return "", err
@@ -42,10 +47,6 @@ func (db *Database) UpdateBookImage(ctx context.Context, id int64, file multipar
 		ID:    id,
 		Image: newFilename,
 	})
-	if err != nil {
-		_ = os.Remove(filepath.Join(imageDir(), "covers", newFilename))
-		return "", err
-	}
 
 	return deleteBookImage(book.Image), nil
 }

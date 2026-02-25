@@ -31,6 +31,7 @@ type BookMetric struct {
 	Date      pgtype.Date
 	Qr        bool
 	Source    pgtype.Text
+	SessionID string
 }
 
 type Machine struct {
@@ -47,4 +48,5 @@ type MachineMetric struct {
 	Qr        bool
 	Source    string
 	Admin     bool
+	SessionID string
 }

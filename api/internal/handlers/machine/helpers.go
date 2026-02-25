@@ -103,6 +103,7 @@ func (h *MachineHandler) recordMachineMetric(r *http.Request, machineID int64) {
 	var (
 		isQr      bool
 		source    string
+		sessionID string
 		hasErrors bool
 	)
 
@@ -124,14 +125,23 @@ func (h *MachineHandler) recordMachineMetric(r *http.Request, machineID int64) {
 		source = parsedSource
 	}
 
+	parsedSessionID, err := requestx.ParseOptionalQuerySessionID(r, "session_id")
+	if err != nil {
+		h.log.Warn("skipping machine metric: invalid session_id machine_id=%d raw=%q err=%v",
+			machineID, requestx.QueryString(r, "session_id"), err)
+		hasErrors = true
+	} else {
+		sessionID = parsedSessionID
+	}
+
 	if hasErrors {
 		return
 	}
 
 	admin := requestx.IsAdminSource(source)
 
-	if _, err := h.repo.InsertMachineMetric(r.Context(), machineID, isQr, source, admin); err != nil {
-		h.log.Error("failed to insert machine metric: machine_id=%d is_qr=%t source=%q admin=%t err=%v",
-			machineID, isQr, source, admin, err)
+	if _, err := h.repo.InsertMachineMetric(r.Context(), machineID, isQr, source, admin, sessionID); err != nil {
+		h.log.Error("failed to insert machine metric: machine_id=%d is_qr=%t source=%q admin=%t session_id=%q err=%v",
+			machineID, isQr, source, admin, sessionID, err)
 	}
 }

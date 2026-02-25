@@ -19,7 +19,7 @@ type mockMachineRepo struct {
 	getMachineByIDFn      func(id int64) (*domain.Machine, error)
 	getMachineWithBooksFn func(id int64) (*domain.MachineWithBooks, error)
 	insertMachineFn       func(machine *domain.Machine) (int64, error)
-	insertMachineMetricFn func(machineID int64, qr bool, source string, admin bool) (int64, error)
+	insertMachineMetricFn func(machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error)
 	loadMachineFn         func(machineID int64, books []domain.BookMachine) error
 	updateMachineFn       func(machine *domain.Machine) error
 	deleteMachineFn       func(id int64) error
@@ -45,11 +45,11 @@ func (m *mockMachineRepo) InsertMachine(ctx context.Context, machine *domain.Mac
 	return m.insertMachineFn(machine)
 }
 
-func (m *mockMachineRepo) InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool) (int64, error) {
+func (m *mockMachineRepo) InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error) {
 	if m.insertMachineMetricFn == nil {
 		return 0, nil
 	}
-	return m.insertMachineMetricFn(machineID, qr, source, admin)
+	return m.insertMachineMetricFn(machineID, qr, source, admin, sessionID)
 }
 
 func (m *mockMachineRepo) LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error {
@@ -263,9 +263,9 @@ func TestGetMachineWithBooks_RecordsMetric(t *testing.T) {
 				Books:   []domain.LoadedBook{},
 			}, nil
 		},
-		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool) (int64, error) {
-			if machineID != 7 || !qr || source != "admin-load" || !admin {
-				t.Fatalf("unexpected metric payload machineID=%d qr=%t source=%q admin=%t", machineID, qr, source, admin)
+		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error) {
+			if machineID != 7 || !qr || source != "admin-load" || !admin || sessionID != "" {
+				t.Fatalf("unexpected metric payload machineID=%d qr=%t source=%q admin=%t sessionID=%q", machineID, qr, source, admin, sessionID)
 			}
 			return 1, nil
 		},
@@ -294,7 +294,7 @@ func TestGetMachineWithBooks_InvalidSource(t *testing.T) {
 				Books:   []domain.LoadedBook{},
 			}, nil
 		},
-		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool) (int64, error) {
+		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error) {
 			t.Fatal("InsertMachineMetric should not be called for invalid source")
 			return 0, nil
 		},
@@ -323,7 +323,7 @@ func TestGetMachineWithBooks_MetricInsertErrorDoesNotFailRequest(t *testing.T) {
 				Books:   []domain.LoadedBook{},
 			}, nil
 		},
-		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool) (int64, error) {
+		insertMachineMetricFn: func(machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error) {
 			return 0, errors.New("insert failed")
 		},
 	}

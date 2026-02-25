@@ -67,9 +67,10 @@ INSERT INTO machine_metrics (
     date,
     qr,
     source,
-    admin
+    admin,
+    session_id
 ) VALUES (
-    $1, NOW()::date, $2, $3, $4
+    $1, NOW()::date, $2, $3, $4, $5
 )
 RETURNING id
 `
@@ -79,6 +80,7 @@ type InsertMachineMetricParams struct {
 	Qr        bool
 	Source    string
 	Admin     bool
+	SessionID string
 }
 
 func (q *Queries) InsertMachineMetric(ctx context.Context, arg InsertMachineMetricParams) (int64, error) {
@@ -87,6 +89,7 @@ func (q *Queries) InsertMachineMetric(ctx context.Context, arg InsertMachineMetr
 		arg.Qr,
 		arg.Source,
 		arg.Admin,
+		arg.SessionID,
 	)
 	var id int64
 	err := row.Scan(&id)

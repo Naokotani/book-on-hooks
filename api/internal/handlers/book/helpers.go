@@ -116,6 +116,7 @@ func (h *BookHandler) recordBookMetric(r *http.Request, bookID int64) {
 		isQr      bool
 		machineID int64
 		source    string
+		sessionID string
 		hasErrors bool
 	)
 
@@ -146,12 +147,21 @@ func (h *BookHandler) recordBookMetric(r *http.Request, bookID int64) {
 		source = parsedSource
 	}
 
+	parsedSessionID, err := requestx.ParseOptionalQuerySessionID(r, "session_id")
+	if err != nil {
+		h.log.Warn("skipping book metric: invalid session_id book_id=%d raw=%q err=%v",
+			bookID, requestx.QueryString(r, "session_id"), err)
+		hasErrors = true
+	} else {
+		sessionID = parsedSessionID
+	}
+
 	if hasErrors || machineID <= 0 {
 		return
 	}
 
-	if _, err := h.repo.InsertBookMetric(r.Context(), bookID, machineID, isQr, source); err != nil {
-		h.log.Error("failed to insert book metric: book_id=%d machine_id=%d is_qr=%t source=%q err=%v",
-			bookID, machineID, isQr, source, err)
+	if _, err := h.repo.InsertBookMetric(r.Context(), bookID, machineID, isQr, source, sessionID); err != nil {
+		h.log.Error("failed to insert book metric: book_id=%d machine_id=%d is_qr=%t source=%q session_id=%q err=%v",
+			bookID, machineID, isQr, source, sessionID, err)
 	}
 }

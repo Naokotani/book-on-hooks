@@ -19,7 +19,7 @@ type MachineRepo interface {
 	GetMachineById(ctx context.Context, id int64) (*domain.Machine, error)
 	GetMachineWithBooks(ctx context.Context, id int64) (*domain.MachineWithBooks, error)
 	InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error)
-	InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool) (int64, error)
+	InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error)
 	LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error
 	UpdateMachine(ctx context.Context, machine *domain.Machine) error
 	DeleteMachine(ctx context.Context, id int64) error

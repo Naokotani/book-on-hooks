@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { getMetricsSession } from "../../lib/metricsSession";
 
 function keyFor(row, col) {
   return `${row}-${col}`;
@@ -24,8 +25,14 @@ export default function AdminMachineLoad() {
         setError("");
         setMessage("");
 
+        const machineParams = new URLSearchParams();
+        const session = getMetricsSession();
+        machineParams.set("source", "admin-load");
+        machineParams.set("is_qr", "false");
+        machineParams.set("session_id", session.sessionId);
+
         const [machineRes, booksRes] = await Promise.all([
-          fetch(`/api/machines/${id}/books`),
+          fetch(`/api/machines/${id}/books?${machineParams.toString()}`),
           fetch("/api/books"),
         ]);
 

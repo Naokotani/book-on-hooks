@@ -109,8 +109,12 @@ func (db *Database) InsertMachine(ctx context.Context, machine *domain.Machine) 
 	return id, nil
 }
 
-func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool, source string) (int64, error) {
+func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool, source, sessionID string) (int64, error) {
 	sourceText := pgtype.Text{String: source, Valid: source != ""}
+	sid := strings.TrimSpace(sessionID)
+	if sid == "" {
+		sid = "unknown"
+	}
 
 	metricID, err := db.Q.InsertBookMetric(ctx, sqlc.InsertBookMetricParams{
 		BookID:    bookID,
@@ -119,8 +123,9 @@ func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int6
 			Time:  time.Now().UTC(),
 			Valid: true,
 		},
-		Qr:     qr,
-		Source: sourceText,
+		Qr:        qr,
+		Source:    sourceText,
+		SessionID: sid,
 	})
 	if err != nil {
 		return 0, err
@@ -129,10 +134,14 @@ func (db *Database) InsertBookMetric(ctx context.Context, bookID, machineID int6
 	return metricID, nil
 }
 
-func (db *Database) InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool) (int64, error) {
+func (db *Database) InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error) {
 	s := strings.TrimSpace(strings.ToLower(source))
 	if s == "" {
 		s = "unknown"
+	}
+	sid := strings.TrimSpace(sessionID)
+	if sid == "" {
+		sid = "unknown"
 	}
 
 	metricID, err := db.Q.InsertMachineMetric(ctx, sqlc.InsertMachineMetricParams{
@@ -140,6 +149,7 @@ func (db *Database) InsertMachineMetric(ctx context.Context, machineID int64, qr
 		Qr:        qr,
 		Source:    s,
 		Admin:     admin,
+		SessionID: sid,
 	})
 	if err != nil {
 		return 0, err

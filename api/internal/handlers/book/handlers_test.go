@@ -24,7 +24,7 @@ type mockBookRepo struct {
 	updateBookFn       func(book *domain.Book) error
 	updateBookImageFn  func(id int64, file multipart.File, header *multipart.FileHeader) (string, error)
 	deleteBookFn       func(id int64) (string, error)
-	insertBookMetricFn func(bookID, machineID int64, qr bool, source string) (int64, error)
+	insertBookMetricFn func(bookID, machineID int64, qr bool, source, sessionID string) (int64, error)
 }
 
 func (m *mockBookRepo) GetBooks(ctx context.Context) ([]domain.Book, error) {
@@ -70,11 +70,11 @@ func (m *mockBookRepo) DeleteBook(ctx context.Context, id int64) (string, error)
 	return m.deleteBookFn(id)
 }
 
-func (m *mockBookRepo) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool, source string) (int64, error) {
+func (m *mockBookRepo) InsertBookMetric(ctx context.Context, bookID, machineID int64, qr bool, source, sessionID string) (int64, error) {
 	if m.insertBookMetricFn == nil {
 		return 0, nil
 	}
-	return m.insertBookMetricFn(bookID, machineID, qr, source)
+	return m.insertBookMetricFn(bookID, machineID, qr, source, sessionID)
 }
 
 // --- Tests ---
@@ -132,9 +132,9 @@ func TestGetBookHandler(t *testing.T) {
 
 func TestGetBookLocationsHandler_ValidQueryString(t *testing.T) {
 	mockRepo := &mockBookRepo{
-		insertBookMetricFn: func(bookID, machineID int64, qr bool, source string) (int64, error) {
-			if bookID != 7 || machineID != 9 || !qr || source != "location-grid" {
-				t.Fatalf("unexpected metric payload bookID=%d machineID=%d qr=%t source=%q", bookID, machineID, qr, source)
+		insertBookMetricFn: func(bookID, machineID int64, qr bool, source, sessionID string) (int64, error) {
+			if bookID != 7 || machineID != 9 || !qr || source != "location-grid" || sessionID != "" {
+				t.Fatalf("unexpected metric payload bookID=%d machineID=%d qr=%t source=%q sessionID=%q", bookID, machineID, qr, source, sessionID)
 			}
 			return 1, nil
 		},
@@ -160,7 +160,7 @@ func TestGetBookLocationsHandler_ValidQueryString(t *testing.T) {
 
 func TestGetBookLocationsHandler_InvalidQueryString(t *testing.T) {
 	mockRepo := &mockBookRepo{
-		insertBookMetricFn: func(bookID, machineID int64, qr bool, source string) (int64, error) {
+		insertBookMetricFn: func(bookID, machineID int64, qr bool, source, sessionID string) (int64, error) {
 			t.Fatal("InsertBookMetric should not be called for invalid query params")
 			return 0, nil
 		},
@@ -186,7 +186,7 @@ func TestGetBookLocationsHandler_InvalidQueryString(t *testing.T) {
 
 func TestGetBookLocationsHandler_InvalidSource(t *testing.T) {
 	mockRepo := &mockBookRepo{
-		insertBookMetricFn: func(bookID, machineID int64, qr bool, source string) (int64, error) {
+		insertBookMetricFn: func(bookID, machineID int64, qr bool, source, sessionID string) (int64, error) {
 			t.Fatal("InsertBookMetric should not be called for invalid source")
 			return 0, nil
 		},
@@ -212,7 +212,7 @@ func TestGetBookLocationsHandler_InvalidSource(t *testing.T) {
 
 func TestGetBookLocationsHandler_MetricInsertErrorDoesNotFailRequest(t *testing.T) {
 	mockRepo := &mockBookRepo{
-		insertBookMetricFn: func(bookID, machineID int64, qr bool, source string) (int64, error) {
+		insertBookMetricFn: func(bookID, machineID int64, qr bool, source, sessionID string) (int64, error) {
 			return 0, errors.New("insert failed")
 		},
 		getBookLocationsFn: func(bookID int64) (*domain.BookLocation, error) {

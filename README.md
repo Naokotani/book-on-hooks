@@ -129,11 +129,14 @@ Machine page entry supports QR tracking with a URL like:
 
 Flow:
 
-1. `LocationMachineView` reads `is_qr` from the page URL and stores it in `sessionStorage`.
+1. `metricsSession` helper (`frontend/src/lib/metricsSession.js`) initializes session metrics context:
+   - ensures a session-scoped `session_id` exists (UUID in `sessionStorage`)
+   - reads optional `is_qr` from the machine page URL and persists it in `sessionStorage`
 2. Cover links from the machine grid to summary pages include:
    - `machine=<machine id>`
    - `source=location-grid`
    - `is_qr=<true|false>` (from session state)
+   - `session_id=<uuid>` (from session state)
 3. `BookLocation` forwards query params to `/api/books/:id/summary`.
 4. API inserts the metric row using those values.
 

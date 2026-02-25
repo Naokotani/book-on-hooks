@@ -60,8 +60,9 @@ INSERT INTO book_metrics (
     machine_id,
     date,
     qr,
-    source
+    source,
+    session_id
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING id;

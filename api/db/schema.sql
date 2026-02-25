@@ -34,7 +34,8 @@ CREATE TABLE book_metrics (
     machine_id  BIGINT NOT NULL REFERENCES machine(id) ON DELETE CASCADE,
     date        DATE NOT NULL DEFAULT CURRENT_DATE,
     qr          BOOLEAN NOT NULL DEFAULT FALSE,
-    source      TEXT
+    source      TEXT,
+    session_id  TEXT NOT NULL DEFAULT 'unknown'
 );
 
 -- MACHINE_METRICS TABLE
@@ -44,5 +45,6 @@ CREATE TABLE machine_metrics (
     date        DATE NOT NULL DEFAULT CURRENT_DATE,
     qr          BOOLEAN NOT NULL DEFAULT FALSE,
     source      TEXT NOT NULL DEFAULT 'unknown',
-    admin       BOOLEAN NOT NULL DEFAULT FALSE
+    admin       BOOLEAN NOT NULL DEFAULT FALSE,
+    session_id  TEXT NOT NULL DEFAULT 'unknown'
 );
