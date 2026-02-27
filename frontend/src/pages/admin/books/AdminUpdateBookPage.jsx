@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import BookForm from "./BookForm";
+import BookForm from "../../../components/ui/BookForm";
 
 export default function AdminUpdateBook() {
   const { id } = useParams();

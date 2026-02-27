@@ -1,0 +1,54 @@
+services:
+  test-db:
+    image: postgres:18
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: books
+    volumes:
+      - books-test-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d books"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    ports:
+      - 5433:5432
+
+  api:
+    build:
+      context: ../api
+      dockerfile: Containerfile
+    command: /usr/local/bin/app
+    environment:
+      DATABASE_URL: postgres://postgres:secret@test-db:5432/books?sslmode=disable
+    depends_on:
+      test-db:
+        condition: service_healthy
+
+  client-nginx-test:
+    build:
+      context: ../frontend
+      dockerfile: Containerfile.nginx
+    depends_on:
+      - api
+    ports:
+      - 8082:80
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/api/healthz >/dev/null 2>&1"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  playwright:
+    build:
+      context: .
+      dockerfile: Containerfile
+    depends_on:
+      test-db:
+        condition: service_healthy
+      client-nginx-test:
+        condition: service_healthy
+    command: ["npx", "playwright", "test", "hello.spec.js", "--reporter=line"]
+
+volumes:
+  books-test-data:

@@ -27,7 +27,7 @@ func testDBURL() string {
 	if v := os.Getenv("TEST_DATABASE_URL"); v != "" {
 		return v
 	}
-	return "postgres://postgres:secret@localhost:5433/books_test?sslmode=disable"
+	return "postgres://postgres:secret@localhost:5433/books?sslmode=disable"
 }
 
 func connectTestDB(t *testing.T) *pgxpool.Pool {

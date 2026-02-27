@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import DeleteConfirmModal from "./DeleteConfirmModal";
+import DeleteConfirmModal from "../../../components/ui/DeleteConfirmModal";
 
 export default function AdminBooks() {
   const [books, setBooks] = useState([]);

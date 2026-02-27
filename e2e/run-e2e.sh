@@ -2,8 +2,13 @@
 set -eu
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+COMPOSE_FILE="$SCRIPT_DIR/compose.yaml"
 
-IMAGE_NAME="book-on-hooks-e2e"
+set +e
+podman compose -f "$COMPOSE_FILE" up --build --abort-on-container-exit --exit-code-from playwright playwright
+EXIT_CODE=$?
+set -e
 
-podman build -t "$IMAGE_NAME" -f "$SCRIPT_DIR/Containerfile" "$SCRIPT_DIR"
-podman run --rm --network=host "$IMAGE_NAME"
+podman compose -f "$COMPOSE_FILE" down
+
+exit "$EXIT_CODE"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getMetricsSession } from "../../lib/metricsSession";
+import { getMetricsSession } from "../../../lib/metricsSession";
 
 function keyFor(row, col) {
   return `${row}-${col}`;

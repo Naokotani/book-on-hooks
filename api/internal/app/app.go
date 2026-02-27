@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"booksonhooks.ca/internal/handlers/book"
+	"booksonhooks.ca/internal/handlers/health"
 	"booksonhooks.ca/internal/handlers/machine"
 	"booksonhooks.ca/internal/logger"
 	"booksonhooks.ca/internal/repository"
@@ -15,6 +16,7 @@ type Application struct {
 
 	machineHandlers *machine.MachineHandler
 	bookHandlers    *book.BookHandler
+	healthHandlers  *health.HealthHandler
 }
 
 func CreateApp(addr *string, logger *logger.Logger, db *repository.Database) http.Server {
@@ -25,6 +27,7 @@ func CreateApp(addr *string, logger *logger.Logger, db *repository.Database) htt
 
 	app.bookHandlers = book.New(logger, db)
 	app.machineHandlers = machine.New(logger, db)
+	app.healthHandlers = health.New(logger, db)
 
 	return http.Server{
 		Addr:     *addr,

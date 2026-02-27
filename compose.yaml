@@ -37,17 +37,6 @@ services:
       - backend
     volumes:
       - books-data:/var/lib/postgresql
-  test-db:
-    image: postgres:18
-    environment:
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: books_test
-    ports:
-      - 5433:5432
-    networks:
-      - backend
-    volumes:
-      - books-test-data:/var/lib/postgresql
   client-nginx:
     image: client-nginx
     build:
@@ -79,7 +68,6 @@ services:
       - 5173:5173
 volumes:
   books-data:
-  books-test-data:
   books-images:
 networks:
   backend:

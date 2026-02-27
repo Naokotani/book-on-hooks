@@ -15,6 +15,9 @@ func (app *Application) Routes() http.Handler {
 		httpErrors.NotFound(w)
 	})
 
+	// Health routes
+	router.HandlerFunc(http.MethodGet, "/api/healthz", app.healthHandlers.Healthz)
+
 	// Book routes
 	router.HandlerFunc(http.MethodGet, "/api/books", app.bookHandlers.GetBooks)
 	router.HandlerFunc(http.MethodPost, "/api/books", app.bookHandlers.CreateBook)
