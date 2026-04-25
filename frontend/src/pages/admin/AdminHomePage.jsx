@@ -60,15 +60,23 @@ export default function AdminHome() {
       {machines.length === 0 ? (
         <p>No machines exist.</p>
       ) : (
-      <ul>
-        {machines.map((machine) => (
-          <li key={machine.id ?? machine.location}>
-            <Link to={`/admin/machine/load/${machine.id}`}>
-              {machine.location} ({machine.rows}x{machine.cols})
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <ul className="admin-machine-list">
+          {machines.map((machine) => (
+            <li key={machine.id ?? machine.location} className="admin-machine-list-item">
+              <span>
+                {machine.location} ({machine.rows}x{machine.cols})
+              </span>
+              <div className="admin-machine-actions">
+                <Link className="admin-btn" to={`/admin/machine/load/${machine.id}`}>
+                  Load Machine
+                </Link>
+                <Link className="admin-btn" to={`/admin/machine/${machine.id}/grid`}>
+                  Configure Grid
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

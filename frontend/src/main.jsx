@@ -16,6 +16,7 @@ import AdminBooks from "./pages/admin/books/AdminBooksPage";
 import AdminCreateBook from "./pages/admin/books/AdminCreateBookPage";
 import AdminUpdateBook from "./pages/admin/books/AdminUpdateBookPage";
 import AdminCreateMachine from "./pages/admin/machines/AdminCreateMachinePage";
+import AdminConfigureMachineGrid from "./pages/admin/machines/AdminConfigureMachineGridPage";
 import AdminMachineLoad from "./pages/admin/machines/AdminMachineLoadPage";
 
 document.body.classList.add("dark");
@@ -40,6 +41,7 @@ function App() {
           <Route path="book/create" element={<AdminCreateBook />} />
           <Route path="book/:id/update" element={<AdminUpdateBook />} />
           <Route path="machine/create" element={<AdminCreateMachine />} />
+          <Route path="machine/:id/grid" element={<AdminConfigureMachineGrid />} />
           <Route path="machine/load/:id" element={<AdminMachineLoad />} />
         </Route>
       </Routes>
