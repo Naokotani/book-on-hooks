@@ -90,19 +90,24 @@ export default function AdminBooks() {
       {books.length === 0 ? (
         <p>No books exist.</p>
       ) : (
-      <ul>
-        {books.map((book) => (
-          <li key={book.id ?? `${book.title}-${book.author}`}>
-            {book.title} by {book.author}{" "}
-            <Link className="admin-btn" to={`/admin/book/${book.id}/update`}>
-              Edit
-            </Link>{" "}
-            <button className="admin-btn" type="button" onClick={() => setDeleteTarget(book)}>
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+        <ul className="admin-machine-list">
+          {books.map((book) => (
+            <li key={book.id ?? `${book.title}-${book.author}`} className="admin-machine-list-item">
+              <div>
+                <strong>{book.title}</strong>
+                <p>by {book.author}</p>
+              </div>
+              <div className="admin-machine-actions">
+                <Link className="admin-btn" to={`/admin/book/${book.id}/update`}>
+                  Edit
+                </Link>
+                <button className="admin-btn" type="button" onClick={() => setDeleteTarget(book)}>
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
       <DeleteConfirmModal
         isOpen={Boolean(deleteTarget)}

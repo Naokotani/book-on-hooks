@@ -56,7 +56,7 @@ export default function AdminHome() {
 
   return (
     <section>
-      <h1>Locations</h1>
+      <h1>Machines</h1>
       {machines.length === 0 ? (
         <p>No machines exist.</p>
       ) : (
