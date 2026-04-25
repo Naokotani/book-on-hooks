@@ -2,8 +2,9 @@ FROM mcr.microsoft.com/playwright:v1.51.1-noble
 
 WORKDIR /work
 
-COPY hello.spec.js /work/hello.spec.js
+COPY *.spec.js /work/
+COPY fixtures /work/fixtures
 
 RUN npm init -y && npm install --save-dev @playwright/test@1.51.1
 
-CMD ["npx", "playwright", "test", "hello.spec.js", "--reporter=line"]
+CMD ["npx", "playwright", "test", "--reporter=line"]

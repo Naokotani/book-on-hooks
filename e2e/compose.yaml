@@ -43,12 +43,7 @@ services:
     build:
       context: .
       dockerfile: Containerfile
-    depends_on:
-      test-db:
-        condition: service_healthy
-      client-nginx-test:
-        condition: service_healthy
-    command: ["npx", "playwright", "test", "hello.spec.js", "--reporter=line"]
+    command: ["npx", "playwright", "test", "--reporter=line"]
 
 volumes:
   books-test-data:

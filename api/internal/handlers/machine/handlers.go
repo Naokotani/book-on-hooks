@@ -18,10 +18,12 @@ type MachineRepo interface {
 	GetMachines(ctx context.Context) ([]domain.Machine, error)
 	GetMachineById(ctx context.Context, id int64) (*domain.Machine, error)
 	GetMachineWithBooks(ctx context.Context, id int64) (*domain.MachineWithBooks, error)
+	MachineHasLoadedBooksOutsideBounds(ctx context.Context, machineID int64, rows int, cols int) (bool, error)
 	InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error)
 	InsertMachineMetric(ctx context.Context, machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error)
 	LoadMachine(ctx context.Context, machineID int64, books []domain.BookMachine) error
 	UpdateMachine(ctx context.Context, machine *domain.Machine) error
+	UpdateMachineRowsCols(ctx context.Context, machineID int64, rows int, cols int) error
 	DeleteMachine(ctx context.Context, id int64) error
 	ClearMachineBooks(ctx context.Context, machineID int64) error
 }
@@ -178,6 +180,63 @@ func (h *MachineHandler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeJSON(w, http.StatusOK, machine)
+}
+
+func (h *MachineHandler) UpdateMachineRowsCols(w http.ResponseWriter, r *http.Request) {
+	id, err := requestx.ParsePathID(r, "id")
+	if err != nil {
+		httpErrors.NotFound(w)
+		return
+	}
+
+	machine, err := h.repo.GetMachineById(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to get machine before row/col update: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	var payload domain.MachineRowColUpdateRequest
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		httpErrors.ClientError(w, http.StatusBadRequest)
+		return
+	}
+
+	if fieldErrors := validateMachineRowColFields(payload.Rows, payload.Cols); len(fieldErrors) > 0 {
+		h.log.Warn("invalid update-machine-grid payload: field_errors=%v", fieldErrors)
+		httpErrors.ValidationError(w, fieldErrors)
+		return
+	}
+
+	hasLoadedBooksOutsideBounds, err := h.repo.MachineHasLoadedBooksOutsideBounds(r.Context(), id, payload.Rows, payload.Cols)
+	if err != nil {
+		h.log.Error("failed to validate machine grid resize: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+	if hasLoadedBooksOutsideBounds {
+		httpErrors.ValidationError(w, map[string]string{
+			"rows": "Cannot shrink machine while removed rows or columns still contain books",
+			"cols": "Cannot shrink machine while removed rows or columns still contain books",
+		})
+		return
+	}
+
+	if err := h.repo.UpdateMachineRowsCols(r.Context(), id, payload.Rows, payload.Cols); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			httpErrors.NotFound(w)
+			return
+		}
+		h.log.Error("failed to update machine rows/cols: %v", err)
+		httpErrors.ServerError(w, http.StatusInternalServerError)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, mapMachineRowColUpdateToMachine(id, machine.Location, payload))
 }
 
 func (h *MachineHandler) DeleteMachine(w http.ResponseWriter, r *http.Request) {

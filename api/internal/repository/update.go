@@ -94,6 +94,19 @@ func (db *Database) UpdateMachine(ctx context.Context, machine *domain.Machine) 
 	return nil
 }
 
+func (db *Database) UpdateMachineRowsCols(ctx context.Context, machineID int64, rows int, cols int) error {
+	err := db.Q.UpdateMachineRowsCols(ctx, sqlc.UpdateMachineRowsColsParams{
+		ID:   machineID,
+		Rows: int32(rows),
+		Cols: int32(cols),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (db *Database) DeleteMachine(ctx context.Context, id int64) error {
 	err := db.Q.DeleteMachine(ctx, id)
 	if err != nil {

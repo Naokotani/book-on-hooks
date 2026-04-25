@@ -43,3 +43,11 @@ LEFT JOIN book_machine bm ON bm.machine_id = m.id
 LEFT JOIN book b ON b.id = bm.book_id
 WHERE m.id = $1
 ORDER BY bm.row, bm.col;
+
+-- name: MachineHasLoadedBooksOutsideBounds :one
+SELECT EXISTS (
+    SELECT 1
+    FROM book_machine
+    WHERE machine_id = sqlc.arg(machine_id)
+      AND (row >= sqlc.arg(rows) OR col >= sqlc.arg(cols))
+);

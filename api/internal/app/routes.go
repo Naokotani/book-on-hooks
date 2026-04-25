@@ -32,6 +32,7 @@ func (app *Application) Routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/api/machines", app.machineHandlers.GetMachines)
 	router.HandlerFunc(http.MethodPost, "/api/machines", app.machineHandlers.CreateMachine)
 	router.HandlerFunc(http.MethodGet, "/api/machines/:id", app.machineHandlers.GetMachine)
+	router.HandlerFunc(http.MethodPatch, "/api/machines/:id/grid", app.machineHandlers.UpdateMachineRowsCols)
 	router.HandlerFunc(http.MethodPatch, "/api/machines/:id", app.machineHandlers.UpdateMachine)
 	router.HandlerFunc(http.MethodDelete, "/api/machines/:id", app.machineHandlers.DeleteMachine)
 	router.HandlerFunc(http.MethodDelete, "/api/machines/:id/books", app.machineHandlers.ClearMachineBooks)

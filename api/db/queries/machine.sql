@@ -26,6 +26,12 @@ SET location = $2,
     columns = $4
 WHERE id = $1;
 
+-- name: UpdateMachineRowsCols :exec
+UPDATE machine
+SET rows = sqlc.arg(rows),
+    columns = sqlc.arg(cols)
+WHERE id = sqlc.arg(id);
+
 -- name: DeleteMachine :exec
 DELETE FROM machine
 WHERE id = $1;

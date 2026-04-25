@@ -152,3 +152,21 @@ func (q *Queries) UpdateMachine(ctx context.Context, arg UpdateMachineParams) er
 	)
 	return err
 }
+
+const updateMachineRowsCols = `-- name: UpdateMachineRowsCols :exec
+UPDATE machine
+SET rows = $1,
+    columns = $2
+WHERE id = $3
+`
+
+type UpdateMachineRowsColsParams struct {
+	Rows int32
+	Cols int32
+	ID   int64
+}
+
+func (q *Queries) UpdateMachineRowsCols(ctx context.Context, arg UpdateMachineRowsColsParams) error {
+	_, err := q.db.Exec(ctx, updateMachineRowsCols, arg.Rows, arg.Cols, arg.ID)
+	return err
+}

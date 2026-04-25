@@ -15,15 +15,17 @@ import (
 )
 
 type mockMachineRepo struct {
-	getMachinesFn         func() ([]domain.Machine, error)
-	getMachineByIDFn      func(id int64) (*domain.Machine, error)
-	getMachineWithBooksFn func(id int64) (*domain.MachineWithBooks, error)
-	insertMachineFn       func(machine *domain.Machine) (int64, error)
-	insertMachineMetricFn func(machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error)
-	loadMachineFn         func(machineID int64, books []domain.BookMachine) error
-	updateMachineFn       func(machine *domain.Machine) error
-	deleteMachineFn       func(id int64) error
-	clearMachineBooksFn   func(machineID int64) error
+	getMachinesFn           func() ([]domain.Machine, error)
+	getMachineByIDFn        func(id int64) (*domain.Machine, error)
+	getMachineWithBooksFn   func(id int64) (*domain.MachineWithBooks, error)
+	hasOutsideBoundsFn      func(machineID int64, rows int, cols int) (bool, error)
+	insertMachineFn         func(machine *domain.Machine) (int64, error)
+	insertMachineMetricFn   func(machineID int64, qr bool, source string, admin bool, sessionID string) (int64, error)
+	loadMachineFn           func(machineID int64, books []domain.BookMachine) error
+	updateMachineFn         func(machine *domain.Machine) error
+	updateMachineRowsColsFn func(machineID int64, rows int, cols int) error
+	deleteMachineFn         func(id int64) error
+	clearMachineBooksFn     func(machineID int64) error
 }
 
 func (m *mockMachineRepo) GetMachines(ctx context.Context) ([]domain.Machine, error) {
@@ -39,6 +41,13 @@ func (m *mockMachineRepo) GetMachineWithBooks(ctx context.Context, id int64) (*d
 		return &domain.MachineWithBooks{}, nil
 	}
 	return m.getMachineWithBooksFn(id)
+}
+
+func (m *mockMachineRepo) MachineHasLoadedBooksOutsideBounds(ctx context.Context, machineID int64, rows int, cols int) (bool, error) {
+	if m.hasOutsideBoundsFn == nil {
+		return false, nil
+	}
+	return m.hasOutsideBoundsFn(machineID, rows, cols)
 }
 
 func (m *mockMachineRepo) InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error) {
@@ -61,6 +70,13 @@ func (m *mockMachineRepo) UpdateMachine(ctx context.Context, machine *domain.Mac
 		return nil
 	}
 	return m.updateMachineFn(machine)
+}
+
+func (m *mockMachineRepo) UpdateMachineRowsCols(ctx context.Context, machineID int64, rows int, cols int) error {
+	if m.updateMachineRowsColsFn == nil {
+		return nil
+	}
+	return m.updateMachineRowsColsFn(machineID, rows, cols)
 }
 
 func (m *mockMachineRepo) DeleteMachine(ctx context.Context, id int64) error {
@@ -223,6 +239,96 @@ func TestMachineCreateHandler_RejectsInvalidDimensions(t *testing.T) {
 
 	if rr.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected 422, got %d", rr.Code)
+	}
+}
+
+func TestUpdateMachineRowsColsHandler(t *testing.T) {
+	mockRepo := &mockMachineRepo{
+		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
+			return &domain.Machine{ID: id, Location: "HQ", Rows: 3, Cols: 4}, nil
+		},
+		hasOutsideBoundsFn: func(machineID int64, rows int, cols int) (bool, error) {
+			if machineID != 7 || rows != 5 || cols != 6 {
+				t.Fatalf("unexpected bounds check payload machineID=%d rows=%d cols=%d", machineID, rows, cols)
+			}
+			return false, nil
+		},
+		updateMachineRowsColsFn: func(machineID int64, rows int, cols int) error {
+			if machineID != 7 || rows != 5 || cols != 6 {
+				t.Fatalf("unexpected row/col update payload machineID=%d rows=%d cols=%d", machineID, rows, cols)
+			}
+			return nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	body := []byte(`{"rows":5,"cols":6}`)
+	req := httptest.NewRequest("PATCH", "/api/machines/7/grid", bytes.NewReader(body))
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.UpdateMachineRowsCols(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+
+	var resp domain.Machine
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response json: %v", err)
+	}
+
+	if resp.ID != 7 || resp.Location != "HQ" || resp.Rows != 5 || resp.Cols != 6 {
+		t.Fatalf("unexpected response payload: %+v", resp)
+	}
+}
+
+func TestUpdateMachineRowsColsHandler_RejectsShrinkWhenRemovedSlotsContainBooks(t *testing.T) {
+	mockRepo := &mockMachineRepo{
+		getMachineByIDFn: func(id int64) (*domain.Machine, error) {
+			return &domain.Machine{ID: id, Location: "HQ", Rows: 4, Cols: 4}, nil
+		},
+		hasOutsideBoundsFn: func(machineID int64, rows int, cols int) (bool, error) {
+			if machineID != 7 || rows != 2 || cols != 2 {
+				t.Fatalf("unexpected bounds check payload machineID=%d rows=%d cols=%d", machineID, rows, cols)
+			}
+			return true, nil
+		},
+		updateMachineRowsColsFn: func(machineID int64, rows int, cols int) error {
+			t.Fatal("UpdateMachineRowsCols should not be called when shrink would remove occupied slots")
+			return nil
+		},
+	}
+
+	logger := logger.NewLogger("info")
+	h := New(&logger, mockRepo)
+
+	body := []byte(`{"rows":2,"cols":2}`)
+	req := httptest.NewRequest("PATCH", "/api/machines/7/grid", bytes.NewReader(body))
+	params := httprouter.Params{{Key: "id", Value: "7"}}
+	req = req.WithContext(context.WithValue(req.Context(), httprouter.ParamsKey, params))
+	rr := httptest.NewRecorder()
+
+	h.UpdateMachineRowsCols(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d", rr.Code)
+	}
+
+	var resp struct {
+		Error       string            `json:"error"`
+		FieldErrors map[string]string `json:"field_errors"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response json: %v", err)
+	}
+
+	expected := "Cannot shrink machine while removed rows or columns still contain books"
+	if resp.FieldErrors["rows"] != expected || resp.FieldErrors["cols"] != expected {
+		t.Fatalf("unexpected field errors: %+v", resp.FieldErrors)
 	}
 }
 

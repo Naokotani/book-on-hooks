@@ -45,6 +45,15 @@ func mapMachineRequestToMachine(req domain.MachineRequest) *domain.Machine {
 	}
 }
 
+func mapMachineRowColUpdateToMachine(id int64, location string, req domain.MachineRowColUpdateRequest) *domain.Machine {
+	return &domain.Machine{
+		ID:       id,
+		Location: location,
+		Rows:     req.Rows,
+		Cols:     req.Cols,
+	}
+}
+
 func validateMachineUpsertFields(location string, rows, cols int) map[string]string {
 	fieldErrors := make(map[string]string)
 
@@ -53,6 +62,20 @@ func validateMachineUpsertFields(location string, rows, cols int) map[string]str
 	} else if !validator.MaxChars(location, 100) {
 		fieldErrors["location"] = "This field can have a maximum of 100 characters"
 	}
+
+	if !validator.PositiveInt(rows) {
+		fieldErrors["rows"] = "Must be a positive integer"
+	}
+
+	if !validator.PositiveInt(cols) {
+		fieldErrors["cols"] = "Must be a positive integer"
+	}
+
+	return fieldErrors
+}
+
+func validateMachineRowColFields(rows, cols int) map[string]string {
+	fieldErrors := make(map[string]string)
 
 	if !validator.PositiveInt(rows) {
 		fieldErrors["rows"] = "Must be a positive integer"

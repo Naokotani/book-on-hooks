@@ -144,6 +144,28 @@ func (q *Queries) InsertBookMachine(ctx context.Context, arg InsertBookMachinePa
 	return err
 }
 
+const machineHasLoadedBooksOutsideBounds = `-- name: MachineHasLoadedBooksOutsideBounds :one
+SELECT EXISTS (
+    SELECT 1
+    FROM book_machine
+    WHERE machine_id = $1
+      AND (row >= $2 OR col >= $3)
+)
+`
+
+type MachineHasLoadedBooksOutsideBoundsParams struct {
+	MachineID int64
+	Rows      int32
+	Cols      int32
+}
+
+func (q *Queries) MachineHasLoadedBooksOutsideBounds(ctx context.Context, arg MachineHasLoadedBooksOutsideBoundsParams) (bool, error) {
+	row := q.db.QueryRow(ctx, machineHasLoadedBooksOutsideBounds, arg.MachineID, arg.Rows, arg.Cols)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const updateBookPosition = `-- name: UpdateBookPosition :exec
 UPDATE book_machine
 SET row = $2,

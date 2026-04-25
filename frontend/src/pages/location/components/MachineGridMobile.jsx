@@ -7,6 +7,46 @@ function keyFor(row, col) {
 
 export default function MachineGridMobile({ rowCount, colCount, bySlot, makeSummaryHref }) {
   const touchStartRef = useRef(null);
+  const activeColRef = useRef(0);
+  const rowRefs = useRef([]);
+
+  function syncRowsToActiveCol(sourceRowIndex) {
+    for (let i = 0; i < rowRefs.current.length; i += 1) {
+      if (i === sourceRowIndex) {
+        continue;
+      }
+
+      const rowEl = rowRefs.current[i];
+      if (!rowEl) {
+        continue;
+      }
+
+      const colWidth = rowEl.clientWidth;
+      if (colWidth <= 0) {
+        continue;
+      }
+
+      const nextLeft = activeColRef.current * colWidth;
+      if (Math.abs(rowEl.scrollLeft - nextLeft) < 1) {
+        continue;
+      }
+
+      rowEl.scrollLeft = nextLeft;
+    }
+  }
+
+  function handleRowScroll(rowIndex, e) {
+    const rowEl = e.currentTarget;
+    const colWidth = rowEl.clientWidth;
+    if (colWidth <= 0) {
+      return;
+    }
+
+    const nextCol = Math.max(0, Math.min(colCount - 1, Math.round(rowEl.scrollLeft / colWidth)));
+    activeColRef.current = nextCol;
+    rowRefs.current[rowIndex] = rowEl;
+    syncRowsToActiveCol(rowIndex);
+  }
 
   function onTouchStart(e) {
     const touch = e.touches?.[0];
@@ -50,7 +90,13 @@ export default function MachineGridMobile({ rowCount, colCount, bySlot, makeSumm
     <div className="machine-grid-mobile-y" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       {Array.from({ length: rowCount }).map((_, row) => (
         <div key={`row-${row}`} className="machine-grid-mobile-row">
-          <div className="machine-grid-mobile-x">
+          <div
+            className="machine-grid-mobile-x"
+            ref={(el) => {
+              rowRefs.current[row] = el;
+            }}
+            onScroll={(e) => handleRowScroll(row, e)}
+          >
             {Array.from({ length: colCount }).map((__, col) => {
               const loadedBook = bySlot.get(keyFor(row, col)) ?? null;
               const summaryHref = loadedBook ? makeSummaryHref(loadedBook.id) : "";

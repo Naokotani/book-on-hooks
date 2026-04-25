@@ -30,6 +30,11 @@ type MachineUpsert struct {
 	Cols     int    `json:"cols"`
 }
 
+type MachineRowColUpdateRequest struct {
+	Rows int `json:"rows"`
+	Cols int `json:"cols"`
+}
+
 type MachineLoadRequest struct {
 	Books []BookMachine `json:"books"`
 }
