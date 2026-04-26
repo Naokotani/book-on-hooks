@@ -1,0 +1,45 @@
+services:
+  api:
+    image: example/books-on-hooks-api:example
+    command: /usr/local/bin/app
+    environment:
+      DATABASE_URL: postgres://postgres:example@db:5432/books?sslmode=disable
+      ADMIN_USERNAME: example
+      ADMIN_PASSWORD_HASH: example
+      COOKIE_SECURE: true
+      IMAGE_DIR: /data/images
+    volumes:
+      - books-images:/data/images
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      - db
+
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: books
+    volumes:
+      - books-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - backend
+
+  client-nginx:
+    image: example/books-on-hooks-client:example
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - backend
+    ports:
+      - "8081:80"
+
+volumes:
+  books-data:
+  books-images:
+
+networks:
+  backend:
