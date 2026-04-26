@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { adminFetch } from "../../../lib/adminAuth";
 
 export default function AdminConfigureMachineGridPage() {
   const { id } = useParams();
@@ -64,7 +65,7 @@ export default function AdminConfigureMachineGridPage() {
     setFieldErrors({});
 
     try {
-      const res = await fetch(`/api/machines/${id}/grid`, {
+      const res = await adminFetch(`/api/admin/machines/${id}/grid`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

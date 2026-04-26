@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DeleteConfirmModal from "../../../components/ui/DeleteConfirmModal";
+import { adminFetch } from "../../../lib/adminAuth";
 
 export default function AdminBooks() {
   const [books, setBooks] = useState([]);
@@ -66,7 +67,7 @@ export default function AdminBooks() {
     setError("");
 
     try {
-      const res = await fetch(`/api/books/book/${deleteTarget.id}`, {
+      const res = await adminFetch(`/api/admin/books/${deleteTarget.id}`, {
         method: "DELETE",
       });
 

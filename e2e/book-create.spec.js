@@ -5,6 +5,14 @@ test("create book via admin form and verify it appears in books list", async ({ 
   const unique = Date.now();
   const title = `E2E Book ${unique}`;
   const coverPath = path.join(__dirname, "fixtures", "cover.png");
+  const username = process.env.E2E_ADMIN_USERNAME || "admin";
+  const password = process.env.E2E_ADMIN_PASSWORD || "password";
+
+  await page.goto("http://client-nginx-test/admin/login");
+  await page.locator("#username").fill(username);
+  await page.locator("#password").fill(password);
+  await page.getByRole("button", { name: "Sign In" }).click();
+  await expect(page).toHaveURL(/\/admin(?:\/)?$/);
 
   await page.goto("http://client-nginx-test/admin/book/create");
 
@@ -15,7 +23,7 @@ test("create book via admin form and verify it appears in books list", async ({ 
   await page.locator("#image").setInputFiles(coverPath);
 
   const createResponsePromise = page.waitForResponse((res) => {
-    return res.request().method() === "POST" && res.url().includes("/api/books");
+    return res.request().method() === "POST" && res.url().includes("/api/admin/books");
   });
 
   await page.getByRole("button", { name: "Create Book" }).click();

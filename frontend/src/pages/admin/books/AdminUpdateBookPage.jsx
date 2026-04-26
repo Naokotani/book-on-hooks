@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import BookForm from "../../../components/ui/BookForm";
+import { adminFetch } from "../../../lib/adminAuth";
 
 export default function AdminUpdateBook() {
   const { id } = useParams();
@@ -68,7 +69,7 @@ export default function AdminUpdateBook() {
       const form = e.currentTarget;
       const formData = new FormData(form);
 
-      const metadataRes = await fetch(`/api/books/book/${id}`, {
+      const metadataRes = await adminFetch(`/api/admin/books/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +87,7 @@ export default function AdminUpdateBook() {
         const imageForm = new FormData();
         imageForm.set("image", image);
 
-        const imageRes = await fetch(`/api/books/images/${id}`, {
+        const imageRes = await adminFetch(`/api/admin/books/${id}/image`, {
           method: "PATCH",
           body: imageForm,
         });

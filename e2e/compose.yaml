@@ -19,6 +19,8 @@ services:
       context: ../api
       dockerfile: Containerfile
     command: /usr/local/bin/app
+    env_file:
+      - ./.env
     environment:
       DATABASE_URL: postgres://postgres:secret@test-db:5432/books?sslmode=disable
     depends_on:
@@ -43,6 +45,8 @@ services:
     build:
       context: .
       dockerfile: Containerfile
+    env_file:
+      - ./.env
     command: ["npx", "playwright", "test", "--reporter=line"]
 
 volumes:

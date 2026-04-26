@@ -346,6 +346,26 @@ nav a:hover {
   align-items: center;
 }
 
+.admin-nav-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--borderColor);
+  background: transparent;
+  color: var(--navText);
+  border-radius: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.95rem;
+  margin-block: 0.8rem;
+  cursor: pointer;
+}
+
+.admin-nav-button:hover {
+  color: #f3e9d2;
+}
+
 .main-nav a + a {
   margin-left: 0;
 }
@@ -643,6 +663,11 @@ summary {
 /* Admin Forms */
 .admin-panel {
   max-width: 56rem;
+}
+
+.admin-login-panel {
+  max-width: 28rem;
+  margin: 4rem auto 0;
 }
 
 .admin-machine-list {

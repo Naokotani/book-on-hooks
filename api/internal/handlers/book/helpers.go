@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
+	"path/filepath"
+	"strings"
 )
 
 func (h *BookHandler) writeJSON(w http.ResponseWriter, status int, data any) {
@@ -96,6 +98,16 @@ func validateBookImage(r *http.Request) (multipart.File, *multipart.FileHeader, 
 	if err != nil {
 		return nil, nil, map[string]string{
 			"image": "Failed to upload file",
+		}
+	}
+
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".webp":
+	default:
+		_ = file.Close()
+		return nil, nil, map[string]string{
+			"image": "Image must be a .jpg, .jpeg, .png, or .webp file",
 		}
 	}
 

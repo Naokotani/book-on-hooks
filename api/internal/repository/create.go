@@ -2,12 +2,13 @@ package repository
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -75,7 +76,10 @@ func storeBookImage(bookID int64, file multipart.File, header *multipart.FileHea
 		return "", fmt.Errorf("missing image file")
 	}
 
-	filename := strconv.FormatInt(bookID, 10) + "_" + header.Filename
+	filename, err := newBookImageFilename(bookID, header.Filename)
+	if err != nil {
+		return "", err
+	}
 	coversDir := filepath.Join(imageDir(), "covers")
 
 	if err := os.MkdirAll(coversDir, 0o755); err != nil {
@@ -94,6 +98,22 @@ func storeBookImage(bookID int64, file multipart.File, header *multipart.FileHea
 	}
 
 	return filename, nil
+}
+
+func newBookImageFilename(bookID int64, originalFilename string) (string, error) {
+	ext := strings.ToLower(filepath.Ext(originalFilename))
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".webp":
+	default:
+		return "", fmt.Errorf("unsupported image file extension")
+	}
+
+	buf := make([]byte, 8)
+	if _, err := rand.Read(buf); err != nil {
+		return "", fmt.Errorf("failed to generate image filename: %w", err)
+	}
+
+	return fmt.Sprintf("%d_%s%s", bookID, hex.EncodeToString(buf), ext), nil
 }
 
 func (db *Database) InsertMachine(ctx context.Context, machine *domain.Machine) (int64, error) {

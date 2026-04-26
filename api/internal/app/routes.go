@@ -18,28 +18,37 @@ func (app *Application) Routes() http.Handler {
 	// Health routes
 	router.HandlerFunc(http.MethodGet, "/api/healthz", app.healthHandlers.Healthz)
 
+	// Admin auth routes
+	router.HandlerFunc(http.MethodPost, "/api/admin/login", app.authHandlers.Login)
+	router.HandlerFunc(http.MethodPost, "/api/admin/logout", app.authHandlers.Logout)
+	router.HandlerFunc(http.MethodGet, "/api/admin/me", app.authHandlers.Me)
+
 	// Book routes
 	router.HandlerFunc(http.MethodGet, "/api/books", app.bookHandlers.GetBooks)
-	router.HandlerFunc(http.MethodPost, "/api/books", app.bookHandlers.CreateBook)
 	router.HandlerFunc(http.MethodGet, "/api/books/book/:id", app.bookHandlers.GetBook)
 	router.HandlerFunc(http.MethodGet, "/api/books/summary/:id", app.bookHandlers.GetBookSummary)
 	router.HandlerFunc(http.MethodGet, "/api/books/images/:image", app.bookHandlers.GetBookImage)
-	router.HandlerFunc(http.MethodPatch, "/api/books/book/:id", app.bookHandlers.UpdateBook)
-	router.HandlerFunc(http.MethodPatch, "/api/books/images/:id", app.bookHandlers.UpdateBookImage)
-	router.HandlerFunc(http.MethodDelete, "/api/books/book/:id", app.bookHandlers.DeleteBook)
 
 	// Machine routes
 	router.HandlerFunc(http.MethodGet, "/api/machines", app.machineHandlers.GetMachines)
-	router.HandlerFunc(http.MethodPost, "/api/machines", app.machineHandlers.CreateMachine)
 	router.HandlerFunc(http.MethodGet, "/api/machines/:id", app.machineHandlers.GetMachine)
-	router.HandlerFunc(http.MethodPatch, "/api/machines/:id/grid", app.machineHandlers.UpdateMachineRowsCols)
-	router.HandlerFunc(http.MethodPatch, "/api/machines/:id", app.machineHandlers.UpdateMachine)
-	router.HandlerFunc(http.MethodDelete, "/api/machines/:id", app.machineHandlers.DeleteMachine)
-	router.HandlerFunc(http.MethodDelete, "/api/machines/:id/books", app.machineHandlers.ClearMachineBooks)
 	router.HandlerFunc(http.MethodGet, "/api/machines/:id/books", app.machineHandlers.GetMachineWithBooks)
-	router.HandlerFunc(http.MethodPut, "/api/machines/:id/books", app.machineHandlers.LoadMachine)
+
+	// Admin book routes
+	router.Handler(http.MethodPost, "/api/admin/books", app.requireAdmin(http.HandlerFunc(app.bookHandlers.CreateBook)))
+	router.Handler(http.MethodPatch, "/api/admin/books/:id", app.requireAdmin(http.HandlerFunc(app.bookHandlers.UpdateBook)))
+	router.Handler(http.MethodPatch, "/api/admin/books/:id/image", app.requireAdmin(http.HandlerFunc(app.bookHandlers.UpdateBookImage)))
+	router.Handler(http.MethodDelete, "/api/admin/books/:id", app.requireAdmin(http.HandlerFunc(app.bookHandlers.DeleteBook)))
+
+	// Admin machine routes
+	router.Handler(http.MethodPost, "/api/admin/machines", app.requireAdmin(http.HandlerFunc(app.machineHandlers.CreateMachine)))
+	router.Handler(http.MethodPatch, "/api/admin/machines/:id", app.requireAdmin(http.HandlerFunc(app.machineHandlers.UpdateMachine)))
+	router.Handler(http.MethodPatch, "/api/admin/machines/:id/grid", app.requireAdmin(http.HandlerFunc(app.machineHandlers.UpdateMachineRowsCols)))
+	router.Handler(http.MethodDelete, "/api/admin/machines/:id", app.requireAdmin(http.HandlerFunc(app.machineHandlers.DeleteMachine)))
+	router.Handler(http.MethodDelete, "/api/admin/machines/:id/books", app.requireAdmin(http.HandlerFunc(app.machineHandlers.ClearMachineBooks)))
+	router.Handler(http.MethodPut, "/api/admin/machines/:id/books", app.requireAdmin(http.HandlerFunc(app.machineHandlers.LoadMachine)))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
-	return standard.Then(router)
+	return app.sessions.LoadAndSave(standard.Then(router))
 }

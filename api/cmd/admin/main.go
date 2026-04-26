@@ -7,15 +7,22 @@ import (
 	"time"
 
 	"booksonhooks.ca/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const usage = `Usage:
   go run ./cmd/admin counts
-  go run ./cmd/admin reset-database`
+  go run ./cmd/admin reset-database
+  go run ./cmd/admin generate-password-hash <password>`
 
 func main() {
 	if len(os.Args) < 2 {
 		exitUsage()
+	}
+
+	if os.Args[1] == "generate-password-hash" {
+		generatePasswordHashCommand()
+		return
 	}
 
 	db, err := repository.GetDatabaseConnection()
@@ -37,6 +44,19 @@ func main() {
 	default:
 		exitUsage()
 	}
+}
+
+func generatePasswordHashCommand() {
+	if len(os.Args) != 3 {
+		exitUsage()
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(os.Args[2]), bcrypt.DefaultCost)
+	if err != nil {
+		fatalf("failed to generate password hash: %v\n", err)
+	}
+
+	fmt.Println(string(hash))
 }
 
 func countsCommand(ctx context.Context, db *repository.Database) {

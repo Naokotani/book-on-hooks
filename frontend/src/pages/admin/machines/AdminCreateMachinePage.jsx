@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { adminFetch } from "../../../lib/adminAuth";
 
 export default function AdminCreateMachine() {
   const [location, setLocation] = useState("");
@@ -15,7 +16,7 @@ export default function AdminCreateMachine() {
     setError("");
 
     try {
-      const res = await fetch("/api/machines", {
+      const res = await adminFetch("/api/admin/machines", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

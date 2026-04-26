@@ -3,6 +3,8 @@ services:
     build: ./api
     image: books-api:latest
     command: /usr/local/bin/app
+    env_file:
+      - ./api/.env
     volumes:
       - books-images:/data/images
     ports:
@@ -15,6 +17,8 @@ services:
     image: cosmtrek/air
     working_dir: /usr/src/app/api
     command: ["air", "-c", ".air.toml"]
+    env_file:
+      - ./api/.env
     environment:
       AIR_WD: /usr/src/app/api
     volumes:

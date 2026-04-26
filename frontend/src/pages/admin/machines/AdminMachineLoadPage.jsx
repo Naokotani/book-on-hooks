@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getMetricsSession } from "../../../lib/metricsSession";
+import { adminFetch } from "../../../lib/adminAuth";
 
 function keyFor(row, col) {
   return `${row}-${col}`;
@@ -126,7 +127,7 @@ export default function AdminMachineLoad() {
         }
       }
 
-      const res = await fetch(`/api/machines/${id}/books`, {
+      const res = await adminFetch(`/api/admin/machines/${id}/books`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

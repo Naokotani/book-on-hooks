@@ -1,5 +1,6 @@
 import { useState } from "react";
 import BookForm from "../../../components/ui/BookForm";
+import { adminFetch } from "../../../lib/adminAuth";
 
 export default function AdminCreateBook() {
   const [values, setValues] = useState({
@@ -30,7 +31,7 @@ export default function AdminCreateBook() {
         throw new Error("please select an image");
       }
 
-      const res = await fetch("/api/books", {
+      const res = await adminFetch("/api/admin/books", {
         method: "POST",
         body: formData,
       });

@@ -113,6 +113,30 @@ Backend package overview (`api/internal`):
 - `logger`: logging abstraction used across the API.
 - `sqlc`: generated query types and database methods from SQL files.
 
+## Admin Auth
+
+Admin routes use server-side session auth.
+
+Required API env vars:
+
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD_HASH`
+- `COOKIE_SECURE`
+
+Generate a bcrypt password hash with the admin utility:
+
+```bash
+cd api
+go run ./cmd/admin generate-password-hash "your-password"
+```
+
+Use the printed hash as `ADMIN_PASSWORD_HASH`.
+
+Notes:
+
+- `COOKIE_SECURE=false` is appropriate for local HTTP development only.
+- Set `COOKIE_SECURE=true` when the app is running behind HTTPS.
+
 ## Metrics
 
 ### Best-Effort
@@ -155,4 +179,3 @@ Notes:
 
 - The `is_qr` value is session-scoped (tab/session lifetime), so it persists across back/forward and multiple summary clicks during the session.
 - This QR behavior is only applied for machine-grid sourced clicks (`source=location-grid`).
-
