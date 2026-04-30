@@ -760,6 +760,61 @@ summary {
   gap: 0.75rem;
 }
 
+.machine-mobile-stage {
+  position: relative;
+}
+
+.machine-nav-arrow {
+  position: absolute;
+  z-index: 5;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 35%);
+  color: var(--white);
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.7;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.machine-nav-arrow:hover {
+  opacity: 0.9;
+}
+
+.machine-nav-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.machine-nav-arrow-left {
+  top: 50%;
+  left: 0.6rem;
+  transform: translateY(-50%);
+}
+
+.machine-nav-arrow-right {
+  top: 50%;
+  right: 0.6rem;
+  transform: translateY(-50%);
+}
+
+.machine-nav-arrow-up {
+  top: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.machine-nav-arrow-down {
+  bottom: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .machine-grid-mobile-y {
   height: 74vh;
   overflow-y: auto;
@@ -769,6 +824,8 @@ summary {
   padding: 0.5rem;
   touch-action: pan-y;
   overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .machine-grid-mobile-row {
@@ -785,6 +842,13 @@ summary {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.machine-grid-mobile-y::-webkit-scrollbar,
+.machine-grid-mobile-x::-webkit-scrollbar {
+  display: none;
 }
 
 .machine-slot-card-mobile {
@@ -867,6 +931,10 @@ summary {
 
   .machine-mobile-controls,
   .machine-grid-mobile-y {
+    display: none;
+  }
+
+  .machine-nav-arrow {
     display: none;
   }
 }
