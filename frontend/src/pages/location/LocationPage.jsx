@@ -55,20 +55,26 @@ export default function Location() {
   }
 
   return (
-    <section>
+    <section className="location-directory-page">
       <h1>Books on Hooks Machine Locations</h1>
       {machines.length === 0 ? (
         <p>No machines exist.</p>
       ) : (
-      <ul>
-        {machines.map((machine) => (
-          <li key={machine.id ?? machine.location}>
-            <Link to={`/location/${machine.id}`}>
-              {machine.location}
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <ol className="location-directory-list">
+          {machines.map((machine) => (
+            <li key={machine.id ?? machine.location} className="location-directory-item">
+              <Link to={`/location/${machine.id}`} className="location-directory-link">
+                <span className="location-directory-copy">
+                  <span className="location-directory-title">{machine.location}</span>
+                  <span className="location-directory-meta">
+                    Rows: {machine.rows} · Cols: {machine.cols}
+                  </span>
+                </span>
+                <span className="location-directory-action">Open</span>
+              </Link>
+            </li>
+          ))}
+        </ol>
       )}
     </section>
   );

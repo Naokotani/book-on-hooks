@@ -1,4 +1,3 @@
 ### Get Your Book
 
-Visit the machine and choose your book from the visible options.  
-The machine dispenses the selected title from its loaded inventory.
+Input your selection, tap to pay, collect your book from the dispensing slot, and you're on your way!

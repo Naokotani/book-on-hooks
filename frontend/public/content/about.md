@@ -1,11 +1,7 @@
 # About
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer non turpis vitae neque fermentum varius. Sed vitae velit vulputate, feugiat urna id, tristique velit.
+Books on Hooks is Ottawa's first book vending machine business and is locally owned and operated. We take pride in curating a selection of the latest and greatest books sold at amazing prices. We are also committed to stocking our machines with local authors from the Ottawa area. Follow us on Instagram to learn about our upcoming titles and hidden prize contests!
 
-## Our Mission
+# Our Mission
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec euismod, nisi vel consectetur interdum, nisl nisi consequat nibh, sed facilisis nunc justo et lorem.
-
-## Why Books on Hooks
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. In in enim vel risus tempor dapibus.
+Books on Hooks is dedicated to putting bestsellers and amazing local authors in your hands with unrivaled convenience. No placing online orders and no waiting for shipping. Great books are now right around the corner at affordable prices. We are here to slay doomscrolling one book at a time!

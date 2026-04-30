@@ -1,4 +1,3 @@
-### Browse Books
+### Browse Selection
 
-Look through the available books and find something you want to read.  
-Each title includes author details, summary text, and pricing.
+View our available titles on display in the machine and find your next read.

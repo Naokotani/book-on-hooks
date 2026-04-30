@@ -55,20 +55,24 @@ export default function Books() {
   }
 
   return (
-    <section>
+    <section className="book-directory-page">
       <h1>Books on Hooks Library</h1>
       {books.length === 0 ? (
         <p>No books exist.</p>
       ) : (
-      <ul>
-        {books.map((book) => (
-          <li key={book.id ?? `${book.title}-${book.author}`}>
-            <Link to={`/books/${book.id}/summary`}>
-              {book.title} by {book.author}
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <ol className="book-directory-list">
+          {books.map((book) => (
+            <li key={book.id ?? `${book.title}-${book.author}`} className="book-directory-item">
+              <Link to={`/books/${book.id}/summary`} className="book-directory-link">
+                <span className="book-directory-copy">
+                  <span className="book-directory-title">{book.title}</span>
+                  <span className="book-directory-meta">by {book.author}</span>
+                </span>
+                <span className="book-directory-action">Details</span>
+              </Link>
+            </li>
+          ))}
+        </ol>
       )}
     </section>
   );
