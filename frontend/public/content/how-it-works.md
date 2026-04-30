@@ -1,4 +1,6 @@
 # How It Works
 
-Books on Hooks connects readers with nearby machines stocked with real books.
-This page gives a simple overview of the flow from discovery to pickup.
+The Books on Hooks website lets readers browse nearby book vending machines to check out available titles at each location.
+
+
+This page gives a simple overview of the flow from finding a title at a Books on Hooks machine to purchase.
