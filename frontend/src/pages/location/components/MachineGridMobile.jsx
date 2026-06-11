@@ -42,6 +42,35 @@ export default function MachineGridMobile({ rowCount, colCount, bySlot, makeSumm
     return bestCol;
   }
 
+  function rowTop(rowIndex) {
+    const rowEl = viewportRef.current?.children?.[rowIndex];
+    if (!rowEl) {
+      return null;
+    }
+
+    return rowEl.offsetTop;
+  }
+
+  function nearestRow(viewport) {
+    if (!viewport || !viewport.children || viewport.children.length === 0) {
+      return 0;
+    }
+
+    let bestRow = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    for (let i = 0; i < viewport.children.length; i += 1) {
+      const top = viewport.children[i].offsetTop;
+      const distance = Math.abs(viewport.scrollTop - top);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestRow = i;
+      }
+    }
+
+    return bestRow;
+  }
+
   function scrollToColumn(rowIndex, colIndex, behavior = "smooth") {
     const rowEl = rowRefs.current[rowIndex];
     if (!rowEl) {
@@ -69,18 +98,18 @@ export default function MachineGridMobile({ rowCount, colCount, bySlot, makeSumm
       return;
     }
 
-    const rowHeight = viewport.clientHeight;
-    if (rowHeight <= 0) {
+    const clampedRow = Math.max(0, Math.min(rowCount - 1, rowIndex));
+    const nextTop = rowTop(clampedRow);
+    if (nextTop === null) {
       return;
     }
 
-    const clampedRow = Math.max(0, Math.min(rowCount - 1, rowIndex));
     setActiveRow(clampedRow);
     viewport.scrollTo({
-      top: clampedRow * rowHeight,
+      top: nextTop,
       behavior,
     });
-    scrollToColumn(clampedRow, activeColRef.current, behavior);
+    scrollToColumn(clampedRow, activeColRef.current, "auto");
   }
 
   function syncRowsToActiveCol(sourceRowIndex) {
@@ -118,12 +147,7 @@ export default function MachineGridMobile({ rowCount, colCount, bySlot, makeSumm
 
   function handleViewportScroll(e) {
     const viewport = e.currentTarget;
-    const rowHeight = viewport.clientHeight;
-    if (rowHeight <= 0) {
-      return;
-    }
-
-    const nextRow = Math.max(0, Math.min(rowCount - 1, Math.round(viewport.scrollTop / rowHeight)));
+    const nextRow = Math.max(0, Math.min(rowCount - 1, nearestRow(viewport)));
     if (nextRow !== activeRow) {
       setActiveRow(nextRow);
     }
