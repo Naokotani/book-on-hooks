@@ -1043,6 +1043,83 @@ summary {
   border: 1px solid #b22222;
 }
 
+.admin-metrics-page {
+  max-width: 68rem;
+}
+
+.admin-metrics-filters {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 36rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-metrics-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+.admin-metric-card {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid var(--borderColor);
+  border-radius: 0.35rem;
+  padding: 0.9rem;
+  background: var(--cardBg);
+}
+
+.admin-metric-card strong {
+  font-family: var(--headingFont);
+  font-size: 1.8rem;
+}
+
+.admin-metric-label {
+  color: var(--code);
+  font-size: 0.9rem;
+}
+
+.admin-metrics-section {
+  margin-top: 2rem;
+}
+
+.admin-metrics-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-metrics-table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+}
+
+.admin-metrics-table th,
+.admin-metrics-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--borderColor);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-metrics-table th {
+  font-family: var(--headingFont);
+  color: var(--code);
+}
+
+.admin-metrics-table td span {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--code);
+  font-size: 0.9rem;
+}
+
+@media (min-width: 640px) {
+  .admin-metrics-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .confirm-modal-overlay {
   position: fixed;
   inset: 0;

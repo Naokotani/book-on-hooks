@@ -13,6 +13,7 @@ import LocationMachineView from "./pages/location/LocationMachinePage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminHome from "./pages/admin/AdminHomePage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
+import AdminMetricsPage from "./pages/admin/AdminMetricsPage";
 import AdminBooks from "./pages/admin/books/AdminBooksPage";
 import AdminCreateBook from "./pages/admin/books/AdminCreateBookPage";
 import AdminUpdateBook from "./pages/admin/books/AdminUpdateBookPage";
@@ -42,6 +43,7 @@ function App() {
         <Route element={<RequireAdmin />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminHome />} />
+            <Route path="metrics" element={<AdminMetricsPage />} />
             <Route path="books" element={<AdminBooks />} />
             <Route path="book/create" element={<AdminCreateBook />} />
             <Route path="book/:id/update" element={<AdminUpdateBook />} />

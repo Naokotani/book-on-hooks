@@ -22,6 +22,7 @@ func (app *Application) Routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/api/admin/login", app.authHandlers.Login)
 	router.HandlerFunc(http.MethodPost, "/api/admin/logout", app.authHandlers.Logout)
 	router.HandlerFunc(http.MethodGet, "/api/admin/me", app.authHandlers.Me)
+	router.Handler(http.MethodGet, "/api/admin/metrics", app.requireAdmin(http.HandlerFunc(app.metricsHandlers.GetDashboard)))
 
 	// Book routes
 	router.HandlerFunc(http.MethodGet, "/api/books", app.bookHandlers.GetBooks)
