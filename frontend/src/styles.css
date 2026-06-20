@@ -322,16 +322,20 @@ nav a:hover {
 .nav-logo-link {
   display: inline-flex;
   align-items: center;
+  flex: 0 1 auto;
+  justify-content: flex-start;
   line-height: 1;
   margin-right: 0.5rem;
+  min-width: 0;
   padding: 0.2rem 0;
 }
 
 .nav-logo {
   display: block;
-  height: clamp(1.8rem, 6vw, 2.6rem);
-  max-width: min(70vw, 18rem);
-  width: auto;
+  height: auto;
+  max-height: calc(var(--headerHeight) - 0.8rem);
+  max-width: min(100%, calc(100vw - (var(--container-pad) * 2) - 5.5rem));
+  width: clamp(8rem, 52vw, 12rem);
 }
 
 .main-nav-shell {
